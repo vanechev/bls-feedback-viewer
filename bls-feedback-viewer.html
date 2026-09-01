@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLS Performance Feedback</title>
+<style>
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/0/css/font-awesome.min.css');
+
+  :root {
+    --ink: #23252b;
+    --paper: #fbfbfc;
+    --panel: #ffffff;
+    --line: #e7e7ec;
+    --accent: #6355e0;
+    --accent-dark: #4b3fc4;
+    --accent-soft: #f1effc;
+    --amber: #b3781a;
+    --amber-soft: #fdf3e3;
+    --red: #c0392b;
+    --red-soft: #fbeae8;
+    --green: #2f8659;
+    --green-soft: #eaf7f0;
+    --muted: #8b8d97;
+    --muted-soft: #f4f4f6;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SFMono-Regular', Consolas, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: white; }
+
+  header {
+    background: var(--panel);
+    color: var(--ink);
+    padding: 16px 28px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  header .brand { display: flex; align-items: baseline; gap: 14px; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; letter-spacing: -0.2px; }
+  header .tag { font-size: 12.5px; color: var(--muted); }
+
+  .setup-bar {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+  }
+  .setup-bar .file-btn { margin-right: 4px; }
+  .setup-bar .note { font-size: 11.5px; color: var(--muted); }
+
+  .layout { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header h2 { font-size: 14.5px; margin: 0; font-weight: 600; }
+  .card-body { padding: 18px; }
+
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .file-btn:hover { background: var(--accent-dark); }
+  .file-btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  .file-btn.ghost:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+  /* ---------- Video panel: main player + thumbnail rail ---------- */
+  .video-panel {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+  }
+  .thumb-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 110px;
+    flex-shrink: 0;
+  }
+  .video-cell {
+    position: relative;
+    width: 100%;
+    background: #0c1620;
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .thumb-rail .video-cell:hover { border-color: var(--accent); }
+  .main-video {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    background: #0c1620;
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+  }
+  .video-cell video, .main-video video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+  .caption-overlay {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 14px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .caption-overlay span {
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 5px 12px;
+    border-radius: 5px;
+    text-align: center;
+    max-width: 100%;
+  }
+  .caption-overlay .cap-speaker { color: #d8d8ff; font-weight: 600; margin-right: 5px; }
+  .video-cell .angle-label, .main-video .angle-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 3px;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+  }
+  .thumb-rail .video-cell.is-main { border-color: var(--accent); }
+  .thumb-rail .video-cell .swap-hint {
+    position: absolute;
+    bottom: 4px;
+    right: 5px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .thumb-rail .video-cell:hover .swap-hint { opacity: 1; }
+  .video-empty {
+    color: #8fa3b5;
+    font-size: 11.5px;
+    text-align: center;
+    padding: 10px 6px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .main-video .video-empty { font-size: 13px; padding: 30px 16px; }
+  .video-empty .icon { font-size: 20px; display: block; margin-bottom: 6px; opacity: 0.6; }
+  .main-video .video-empty .icon { font-size: 26px; }
+
+  /* ---------- Video + tabs row ---------- */
+  .video-tabs-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .video-tabs-row > .card {
+    display: flex;
+    flex-direction: column;
+  }
+  .video-tabs-row > .card .tab-panel.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  @media (max-width: 900px) {
+    .video-tabs-row { grid-template-columns: 1fr; }
+    .video-tabs-row > .card { display: block; }
+    .video-tabs-row > .card .tab-panel.active { display: block; }
+  }
+
+  /* ---------- Tabs (Events / Summary) ---------- */
+  .tab-bar {
+    display: flex;
+    gap: 20px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab-btn {
+    flex: none;
+    background: none;
+    border: none;
+    padding: 14px 2px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: var(--sans);
+  }
+  .tab-btn.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---------- Summary tab ---------- */
+  .summary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 16px 18px;
+  }
+  .summary-stat {
+    background: var(--muted-soft);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .summary-stat .stat-value { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--ink); }
+  .summary-stat .stat-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .summary-breakdown { padding: 0 18px 16px; }
+  .summary-breakdown-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .summary-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 13.5px; }
+  .summary-row .row-count { font-family: var(--mono); font-weight: 600; }
+
+  /* ---------- Shared transport ---------- */
+  .transport {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--line);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .transport .timecode {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--muted-soft);
+    color: var(--ink);
+    padding: 6px 9px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .transport button {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--sans);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .transport button:hover { background: var(--muted-soft); border-color: var(--accent); }
+  #playPauseBtn { min-width: 84px; text-align: center; }
+  .cc-btn { font-weight: 600; font-size: 11.5px; letter-spacing: 0.3px; padding: 7px 10px; }
+  .cc-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .cc-btn.active:hover { background: var(--accent-dark); }
+  .transport .rate-select { font-size: 13px; border: 1px solid var(--line); border-radius: 7px; padding: 6px 6px; background: var(--panel); flex-shrink: 0; }
+
+  .seekbar-wrap { padding: 6px 18px 18px; }
+  .seekbar-track { position: relative; height: 26px; display: flex; align-items: center; }
+  input[type=range].seekbar {
+    width: 100%;
+    display: block;
+    margin: 0;
+    position: relative;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    height: 26px;
+  }
+  input[type=range].seekbar::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  input[type=range].seekbar::-moz-range-track {
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  input[type=range].seekbar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    margin-top: -5px;
+    cursor: pointer;
+  }
+  input[type=range].seekbar::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    cursor: pointer;
+  }
+  .seekbar-markers {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 10px;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .marker-range {
+    position: absolute;
+    top: 3px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--accent);
+    opacity: 0.4;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .marker-range:hover { opacity: 0.65; }
+  .marker-point {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  .marker-point:hover { transform: translate(-50%, -50%) scale(1.3); }
+
+  /* ---------- Score banner ---------- */
+  .score-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 20px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+  }
+  .score-banner .score-meta { flex: 1; min-width: 140px; }
+  .score-banner .video-id { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .score-banner .video-id strong { color: var(--ink); text-transform: none; letter-spacing: normal; font-size: 14px; }
+
+  .score-donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .score-donut { position: relative; width: 84px; height: 84px; flex-shrink: 0; }
+  .score-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .score-donut .donut-track { fill: none; stroke: var(--muted-soft); stroke-width: 9; }
+  .score-donut .donut-fill { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; transition: stroke-dasharray 0.4s ease; }
+  .score-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-value {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .score-donut-label { text-align: left; }
+  .score-donut-label .score-of-line { font-size: 13px; color: var(--muted); }
+  .score-donut-label .score-of-line strong { color: var(--ink); font-weight: 600; }
+
+  .ai-scored-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .ai-scored-note {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 18px 0;
+  }
+
+  /* ---------- Action timeline ---------- */
+  .timeline-list { flex: 1; min-height: 200px; max-height: 480px; overflow-y: auto; }
+  .timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .timeline-item:hover { background: var(--muted-soft); }
+  .timeline-item.flash-highlight { background: var(--amber-soft); transition: background 0.3s; }
+  .timeline-item .t-time {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    min-width: 62px;
+    text-align: center;
+  }
+  .timeline-item .t-label { font-size: 13.5px; }
+  .timeline-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ---------- Feedback ---------- */
+  .feedback-item { border-bottom: 1px solid var(--line); padding: 16px 18px; }
+  .feedback-item:last-child { border-bottom: none; }
+  .feedback-item .f-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .feedback-item .f-title-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .feedback-item .f-title { font-size: 13.5px; font-weight: 600; }
+  .feedback-item .f-score { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .feedback-item .f-comment { font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+  .feedback-item .f-comment.empty { color: var(--muted); font-style: italic; }
+  .mark-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; flex-shrink: 0; }
+  .mark-pill.correct { background: var(--green-soft); color: var(--green); }
+  .mark-pill.partial { background: var(--amber-soft); color: var(--amber); }
+  .mark-pill.incorrect { background: var(--red-soft); color: var(--red); }
+  .mark-pill.notseen { background: var(--muted-soft); color: var(--muted); }
+
+  .f-events-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .f-events-label { font-size: 11px; color: var(--muted); margin-right: 2px; }
+  .event-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--muted-soft);
+    color: var(--ink);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    cursor: pointer;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .event-tag .tag-time { font-family: var(--mono); flex-shrink: 0; color: var(--muted); }
+  .event-tag:hover { background: var(--accent-soft); color: var(--accent-dark); }
+  .event-tag:hover .tag-time { color: var(--accent-dark); }
+  .overall-comment-box {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--accent-dark);
+  }
+  .overall-comment-box strong { color: var(--ink); }
+
+  .empty-note { padding: 30px; text-align: center; color: var(--muted); font-size: 13.5px; }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: var(--paper); }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  footer { text-align: center; padding: 18px; color: var(--muted); font-size: 11.5px; }
+
+  @media (max-width: 700px) {
+    .video-panel { flex-direction: column; }
+    .thumb-rail { flex-direction: row; width: auto; }
+    .thumb-rail .video-cell { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>BLS Performance Feedback</h1>
+  </div>
+  <div class="tag" id="statusLine">No session loaded</div>
+</header>
+
+<div class="setup-bar">
+  <button class="file-btn" id="pickVideosBtn"><i class="fa fa-film"></i> Open your 4 videos&hellip;</button>
+  <input type="file" id="videosInput" accept="video/*" multiple style="display:none">
+  <button class="file-btn ghost" id="pickJsonBtn"><i class="fa fa-file-text"></i> Open your feedback file (.json)&hellip;</button>
+  <input type="file" id="jsonInput" accept=".json" style="display:none">
+  <span class="note">Select all 4 video files at once, and the .json feedback file your assessor/lecturer provided.</span>
+</div>
+
+<div class="layout">
+
+  <!-- Video panel (left) + tabbed Events / Summary (right) -->
+  <div class="video-tabs-row">
+
+    <div class="card">
+      <div class="card-header">
+        <h2 id="sessionNameLabel">No session loaded</h2>
+        <span class="tag" style="color:var(--muted)" id="videoLoadStatus">No videos loaded</span>
+      </div>
+      <div class="video-panel">
+        <div class="thumb-rail" id="thumbRail"></div>
+        <div class="main-video" id="mainVideo">
+          <div class="caption-overlay" id="captionOverlay" style="display:none"></div>
+        </div>
+      </div>
+      <div class="transport">
+        <button id="playPauseBtn" title="Space">&#9654; Play</button>
+        <button id="back5" title="J">&laquo; 5s</button>
+        <button id="back1" title="&larr;">&lsaquo; 1s</button>
+        <button id="fwd1" title="&rarr;">1s &rsaquo;</button>
+        <button id="fwd5" title="L">5s &raquo;</button>
+        <div class="timecode" id="timecode">00:00:00 / 00:00:00</div>
+        <select class="rate-select" id="rateSelect">
+          <option value="0.25">0.25&times;</option>
+          <option value="0.5">0.5&times;</option>
+          <option value="0.75">0.75&times;</option>
+          <option value="1" selected>1&times;</option>
+          <option value="1.5">1.5&times;</option>
+          <option value="2">2&times;</option>
+        </select>
+        <button id="ccToggleBtn" class="cc-btn" title="Toggle captions">CC</button>
+      </div>
+      <div class="seekbar-wrap">
+        <div class="seekbar-track">
+          <input type="range" class="seekbar" id="seekbar" min="0" max="100" value="0" step="0.01">
+          <div class="seekbar-markers" id="seekbarMarkers"></div>
+        </div>
+      </div>
+      <div class="ai-scored-note" style="padding-bottom:14px">Click a thumbnail to swap it into the main view. Dots mark single actions, bars mark actions with duration &mdash; click either to jump.</div>
+    </div>
+
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="eventsTabBtn">Events</button>
+        <button class="tab-btn" id="transcriptTabBtn">Transcript</button>
+        <button class="tab-btn" id="summaryTabBtn">Summary</button>
+      </div>
+      <div style="padding:10px 18px 0; display:flex; justify-content:flex-end;">
+        <span class="ai-scored-badge"><i class="fa fa-magic"></i> Scored with AI</span>
+      </div>
+
+      <div class="tab-panel active" id="eventsTabPanel">
+        <div class="ai-scored-note">Detected automatically by AI &mdash; always review against the video for accuracy.</div>
+        <div class="timeline-list" id="timelineList">
+          <div class="timeline-empty">Load your feedback file to see the detected action timeline.</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="transcriptTabPanel">
+        <div class="ai-scored-note">Auto-generated from audio &mdash; always review against the video for accuracy.</div>
+        <div class="timeline-list" id="transcriptList">
+          <div class="timeline-empty">No transcript available for this session.</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="summaryTabPanel">
+        <div class="ai-scored-note">A quick overview of this session &mdash; see the Evaluation section below for full detail.</div>
+        <div class="summary-stats" id="summaryStats">
+          <div class="summary-stat"><div class="stat-value" id="statDuration">&mdash;</div><div class="stat-label">Session length</div></div>
+          <div class="summary-stat"><div class="stat-value" id="statActions">&mdash;</div><div class="stat-label">Actions detected</div></div>
+        </div>
+        <div class="summary-breakdown">
+          <div class="summary-breakdown-title">Criteria breakdown</div>
+          <div id="summaryBreakdownList">
+            <div class="empty-note">Load your feedback file to see a summary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Evaluation: score + per-criterion feedback, full width -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Evaluation</h2>
+      <span class="ai-scored-badge"><i class="fa fa-magic"></i> Scored with AI</span>
+    </div>
+    <div class="score-banner">
+      <div class="score-meta">
+        <div class="video-id">Session <strong id="videoIdLabel">&mdash;</strong></div>
+      </div>
+      <div class="score-donut-wrap">
+        <div class="score-donut-label">
+          <div class="score-of-line">Total score</div>
+          <div class="score-of-line"><strong id="scoreOf">&mdash; / 0</strong></div>
+        </div>
+        <div class="score-donut">
+          <svg viewBox="0 0 100 100">
+            <circle class="donut-track" cx="50" cy="50" r="40"></circle>
+            <circle class="donut-fill" id="scoreDonutFill" cx="50" cy="50" r="40" stroke-dasharray="0 251.2"></circle>
+          </svg>
+          <div class="score-donut-center">
+            <span class="score-value" id="scoreValue">&mdash;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-scored-note">Comments and scores below were generated automatically from your video &mdash; always review them for accuracy.</div>
+    <div id="overallCommentWrap"></div>
+    <div id="feedbackList">
+      <div class="empty-note">Load your feedback file to see written feedback for each criterion.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>BLS Performance Feedback &middot; local-only, no data leaves this browser &middot; RMIT</footer>
+
+<script>
+(function(){
+
+  // ---------------------------------------------------------------
+  // Rubric criterion titles (kept in sync with the assessor tool)
+  // ---------------------------------------------------------------
+  const RUBRIC = [
+    {id:"r1", pts:1, title:"Checks for danger/hazards to self and others when approaching the patient", relatedActions:["A1.1","A1.2"]},
+    {id:"r2", pts:1, title:"Assesses patient's conscious state", relatedActions:["A2.1","A2.2"]},
+    {id:"r3", pts:1, title:"Sends for help", relatedActions:["A3.1","A3.2","A3.3"]},
+    {id:"r4-a", pts:0.5, title:"Positions patient appropriately", relatedActions:["A4.1","A4.2"]},
+    {id:"r4-b", pts:0.5, title:"Clears/opens the airway", relatedActions:["A4.3","A4.4","A4.5"]},
+    {id:"r5", pts:1, title:"Checks for breathing", relatedActions:["A5.1","A5.2"]},
+    {id:"r6", pts:1, title:"Demonstrates the proper position and depth of chest compressions", relatedActions:["A6.1","A6.2","A6.3","A6.4"]},
+    {id:"r7", pts:1, title:"Prepares the patient for application of the AED and the indications", relatedActions:["A7.1","A7.2"]},
+    {id:"r8", pts:0.5, title:"Positioning of AED pads", relatedActions:["A8.1"]},
+    {id:"r9", pts:1, title:"Demonstrates appropriate and safe practice using AED", relatedActions:["A9.1","A9.2","A9.3","A9.4","A9.5"]},
+    {id:"r10", pts:0.5, title:"Continues to follow instructions provided by AED and continues to deliver BLS as indicated", relatedActions:["A10.1","A10.2","A10.3"]},
+    {id:"r11", pts:0.5, title:"Evidence of effective interaction and collaboration with team members", relatedActions:[]},
+  ];
+  const RUBRIC_TOTAL = RUBRIC.reduce((s,r) => s + r.pts, 0);
+  const MARK_LABELS = {correct:"Correct", partial:"Partial", incorrect:"Incorrect", notseen:"Not observed"};
+
+  // ---------------------------------------------------------------
+  // Elements
+  // ---------------------------------------------------------------
+  const thumbRail = document.getElementById('thumbRail');
+  const mainVideo = document.getElementById('mainVideo');
+  const pickVideosBtn = document.getElementById('pickVideosBtn');
+  const videosInput = document.getElementById('videosInput');
+  const pickJsonBtn = document.getElementById('pickJsonBtn');
+  const jsonInput = document.getElementById('jsonInput');
+  const videoLoadStatus = document.getElementById('videoLoadStatus');
+  const statusLine = document.getElementById('statusLine');
+  const seekbar = document.getElementById('seekbar');
+  const timecode = document.getElementById('timecode');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const rateSelect = document.getElementById('rateSelect');
+  const scoreValue = document.getElementById('scoreValue');
+  const scoreOf = document.getElementById('scoreOf');
+  const scoreDonutFill = document.getElementById('scoreDonutFill');
+  const DONUT_CIRCUMFERENCE = 2 * Math.PI * 40; // r=40 in the SVG
+  const videoIdLabel = document.getElementById('videoIdLabel');
+  const sessionNameLabel = document.getElementById('sessionNameLabel');
+  const timelineList = document.getElementById('timelineList');
+  const seekbarMarkers = document.getElementById('seekbarMarkers');
+  const feedbackList = document.getElementById('feedbackList');
+  const overallCommentWrap = document.getElementById('overallCommentWrap');
+  const eventsTabBtn = document.getElementById('eventsTabBtn');
+  const transcriptTabBtn = document.getElementById('transcriptTabBtn');
+  const summaryTabBtn = document.getElementById('summaryTabBtn');
+  const eventsTabPanel = document.getElementById('eventsTabPanel');
+  const transcriptTabPanel = document.getElementById('transcriptTabPanel');
+  const summaryTabPanel = document.getElementById('summaryTabPanel');
+  const transcriptList = document.getElementById('transcriptList');
+  const captionOverlay = document.getElementById('captionOverlay');
+  const ccToggleBtn = document.getElementById('ccToggleBtn');
+  const statDuration = document.getElementById('statDuration');
+  const statActions = document.getElementById('statActions');
+  const summaryBreakdownList = document.getElementById('summaryBreakdownList');
+
+  // ---------------------------------------------------------------
+  // Tabs: Events / Transcript / Summary
+  // ---------------------------------------------------------------
+  const TABS = {
+    events: { btn: eventsTabBtn, panel: eventsTabPanel },
+    transcript: { btn: transcriptTabBtn, panel: transcriptTabPanel },
+    summary: { btn: summaryTabBtn, panel: summaryTabPanel },
+  };
+  function activateTab(which) {
+    Object.keys(TABS).forEach(key => {
+      const isActive = key === which;
+      TABS[key].btn.classList.toggle('active', isActive);
+      TABS[key].panel.classList.toggle('active', isActive);
+    });
+  }
+  eventsTabBtn.addEventListener('click', () => activateTab('events'));
+  transcriptTabBtn.addEventListener('click', () => activateTab('transcript'));
+  summaryTabBtn.addEventListener('click', () => activateTab('summary'));
+
+  // Switch to the Events tab, scroll to the matching timeline row, and
+  // briefly highlight it — used when a "related event" tag is clicked
+  // from the Evaluation card below.
+  function jumpToEvent(entryId) {
+    activateTab('events');
+    const row = timelineList.querySelector(`[data-entry-id="${entryId}"]`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.add('flash-highlight');
+    setTimeout(() => row.classList.remove('flash-highlight'), 1400);
+  }
+
+  // Same pattern as jumpToEvent, but for a transcript segment.
+  function jumpToTranscript(segId) {
+    activateTab('transcript');
+    const row = transcriptList.querySelector(`[data-seg-id="${segId}"]`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.add('flash-highlight');
+    setTimeout(() => row.classList.remove('flash-highlight'), 1400);
+  }
+
+  // ---------------------------------------------------------------
+  // Caption overlay (CC toggle) on the main video
+  // ---------------------------------------------------------------
+  let captionsOn = false;
+  ccToggleBtn.addEventListener('click', () => {
+    captionsOn = !captionsOn;
+    ccToggleBtn.classList.toggle('active', captionsOn);
+    captionOverlay.style.display = captionsOn ? '' : 'none';
+    if (!captionsOn) captionOverlay.innerHTML = '';
+  });
+
+  function updateCaptionOverlay(currentTime) {
+    if (!captionsOn || !sessionData) return;
+    const segments = sessionData.transcriptSegments || [];
+    const active = segments.find(seg => {
+      const s = parseTime(seg.start);
+      const e = parseTime(seg.end);
+      return s !== null && e !== null && currentTime >= s && currentTime <= e;
+    });
+    if (!active) {
+      captionOverlay.innerHTML = '';
+      return;
+    }
+    captionOverlay.innerHTML = `<span>${active.speaker ? `<span class="cap-speaker">${escapeHtml(active.speaker)}:</span>` : ''}${escapeHtml(active.text || '')}</span>`;
+  }
+
+  let players = []; // {el, index, loaded}
+  let masterPlayer = null; // the player driving sync (first loaded one)
+  let syncing = false; // guard against feedback loops while syncing
+  let sessionData = null;
+  let mainIndex = 0; // which player index is currently shown in the main view
+
+  // ---------------------------------------------------------------
+  // Build 4 <video> elements up front (empty placeholders), one
+  // shown large in the main view, the other three as thumbnails.
+  // ---------------------------------------------------------------
+  function buildEmptyGrid() {
+    players = [];
+    for (let i = 0; i < 4; i++) {
+      const video = document.createElement('video');
+      video.id = `player${i}`;
+      video.playsInline = true;
+      video.style.display = 'none';
+      players.push({ el: video, index: i, loaded: false });
+    }
+    renderVideoPanel();
+  }
+  buildEmptyGrid();
+
+  function renderVideoPanel() {
+    // Main view. The caption overlay is a permanent child of #mainVideo
+    // (defined in the static HTML) — detach it first, rebuild the video
+    // wrap, then re-append it on top so it survives every re-render.
+    const captionEl = document.getElementById('captionOverlay');
+    mainVideo.innerHTML = '';
+    const mainP = players[mainIndex];
+    const mainWrap = document.createElement('div');
+    mainWrap.style.cssText = 'position:relative;width:100%;height:100%;';
+    if (mainP.loaded) {
+      mainWrap.appendChild(mainP.el);
+      mainP.el.style.display = 'block';
+    } else {
+      mainWrap.innerHTML = `<div class="video-empty"><span class="icon">&#9654;</span>Angle ${mainIndex+1}</div>`;
+    }
+    const mainLabel = document.createElement('span');
+    mainLabel.className = 'angle-label';
+    mainLabel.textContent = `Angle ${mainIndex+1}`;
+    mainWrap.appendChild(mainLabel);
+    mainVideo.appendChild(mainWrap);
+    if (captionEl) mainVideo.appendChild(captionEl);
+
+    // Thumbnail rail: the other three angles
+    thumbRail.innerHTML = '';
+    players.forEach(p => {
+      if (p.index === mainIndex) return;
+      const cell = document.createElement('div');
+      cell.className = 'video-cell';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;width:100%;height:100%;';
+      if (p.loaded) {
+        wrap.appendChild(p.el);
+        p.el.style.display = 'block';
+      } else {
+        wrap.innerHTML = `<div class="video-empty"><span class="icon">&#9654;</span>Angle ${p.index+1}</div>`;
+      }
+      const label = document.createElement('span');
+      label.className = 'angle-label';
+      label.textContent = `Angle ${p.index+1}`;
+      wrap.appendChild(label);
+      const hint = document.createElement('span');
+      hint.className = 'swap-hint';
+      hint.textContent = 'Click to view';
+      wrap.appendChild(hint);
+      cell.appendChild(wrap);
+      cell.addEventListener('click', () => {
+        mainIndex = p.index;
+        renderVideoPanel();
+      });
+      thumbRail.appendChild(cell);
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Load videos (local files, never uploaded)
+  // ---------------------------------------------------------------
+  pickVideosBtn.addEventListener('click', () => videosInput.click());
+  videosInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 4);
+    if (!files.length) return;
+    // Sort by filename for a stable, predictable angle order
+    files.sort((a,b) => a.name.localeCompare(b.name));
+    let firstLoadedInThisBatch = null;
+    files.forEach((file, i) => {
+      if (i >= 4) return;
+      const p = players[i];
+      const url = URL.createObjectURL(file);
+      p.el.src = url;
+      p.el.style.display = 'block';
+      p.loaded = true;
+      if (masterPlayer === null && firstLoadedInThisBatch === null) {
+        firstLoadedInThisBatch = p;
+      }
+      wirePlayerSync(p);
+    });
+    if (masterPlayer === null && firstLoadedInThisBatch) {
+      masterPlayer = firstLoadedInThisBatch.el;
+    }
+    videoLoadStatus.textContent = `${files.length} of 4 angles loaded`;
+    renderVideoPanel();
+    updateStatus();
+    // Safety net: if metadata already loaded before our listener attached
+    // (fast local files), render markers immediately too.
+    if (masterPlayer && isFinite(masterPlayer.duration) && masterPlayer.duration > 0) {
+      renderSeekbarMarkers();
+    }
+  });
+
+  function wirePlayerSync(p) {
+    // Only the FIRST loaded player (across the whole session) drives the
+    // seekbar/timecode UI; all players stay in sync on play/pause/seek.
+    if (masterPlayer === null && !p.el.dataset.wiredAsMaster) {
+      p.el.dataset.wiredAsMaster = '1';
+      p.el.addEventListener('timeupdate', () => {
+        if (syncing) return;
+        if (!isNaN(p.el.duration)) {
+          seekbar.value = (p.el.currentTime / p.el.duration) * 100;
+        }
+        timecode.textContent = `${fmtTime(p.el.currentTime)} / ${fmtTime(p.el.duration)}`;
+        updateCaptionOverlay(p.el.currentTime);
+      });
+      p.el.addEventListener('play', () => { playPauseBtn.innerHTML = '&#10074;&#10074; Pause'; syncAll('play'); });
+      p.el.addEventListener('pause', () => { playPauseBtn.innerHTML = '&#9654; Play'; syncAll('pause'); });
+      p.el.addEventListener('loadedmetadata', () => {
+        renderSeekbarMarkers();
+        if (sessionData) renderSession(sessionData);
+      });
+    }
+  }
+
+  function syncAll(action, time) {
+    syncing = true;
+    players.forEach(p => {
+      if (!p.loaded) return;
+      if (action === 'play' && p.el.paused) p.el.play().catch(()=>{});
+      if (action === 'pause' && !p.el.paused) p.el.pause();
+      if (action === 'seek' && time !== undefined) {
+        if (Math.abs(p.el.currentTime - time) > 0.15) p.el.currentTime = time;
+      }
+    });
+    syncing = false;
+  }
+
+  function fmtTime(sec) {
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
+  }
+  function parseTime(str) {
+    const parts = str.split(':').map(Number);
+    if (parts.some(isNaN)) return null;
+    let sec = 0;
+    if (parts.length === 3) sec = parts[0]*3600 + parts[1]*60 + parts[2];
+    else if (parts.length === 2) sec = parts[0]*60 + parts[1];
+    else sec = parts[0];
+    return sec;
+  }
+
+  function togglePlay() {
+    if (!masterPlayer) return;
+    if (masterPlayer.paused) masterPlayer.play();
+    else masterPlayer.pause();
+  }
+  playPauseBtn.addEventListener('click', togglePlay);
+
+  seekbar.addEventListener('input', () => {
+    if (!masterPlayer || isNaN(masterPlayer.duration)) return;
+    const t = (seekbar.value / 100) * masterPlayer.duration;
+    masterPlayer.currentTime = t;
+    syncAll('seek', t);
+  });
+
+  function seekAllTo(seconds) {
+    if (!masterPlayer) return;
+    masterPlayer.currentTime = seconds;
+    syncAll('seek', seconds);
+    if (!isNaN(masterPlayer.duration)) seekbar.value = (seconds / masterPlayer.duration) * 100;
+    timecode.textContent = `${fmtTime(seconds)} / ${fmtTime(masterPlayer.duration || 0)}`;
+  }
+
+  document.getElementById('back5').addEventListener('click', () => seekAllTo(Math.max(0, (masterPlayer?.currentTime||0) - 5)));
+  document.getElementById('fwd5').addEventListener('click', () => seekAllTo((masterPlayer?.currentTime||0) + 5));
+  document.getElementById('back1').addEventListener('click', () => seekAllTo(Math.max(0, (masterPlayer?.currentTime||0) - 1)));
+  document.getElementById('fwd1').addEventListener('click', () => seekAllTo((masterPlayer?.currentTime||0) + 1));
+
+  rateSelect.addEventListener('change', () => {
+    const rate = parseFloat(rateSelect.value);
+    players.forEach(p => { if (p.loaded) p.el.playbackRate = rate; });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if (!masterPlayer) return;
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    else if (e.code === 'ArrowLeft') { e.preventDefault(); seekAllTo(Math.max(0, masterPlayer.currentTime - 1)); }
+    else if (e.code === 'ArrowRight') { e.preventDefault(); seekAllTo(masterPlayer.currentTime + 1); }
+    else if (e.code === 'KeyJ') { seekAllTo(Math.max(0, masterPlayer.currentTime - 5)); }
+    else if (e.code === 'KeyL') { seekAllTo(masterPlayer.currentTime + 5); }
+  });
+
+  // ---------------------------------------------------------------
+  // Load feedback JSON
+  // ---------------------------------------------------------------
+  pickJsonBtn.addEventListener('click', () => jsonInput.click());
+  jsonInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        sessionData = JSON.parse(ev.target.result);
+        renderSession(sessionData);
+      } catch (err) {
+        alert('Could not read this feedback file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------------------------------------------------------------
+  // Seekbar markers: a duration RANGE (bar) for actions with a real
+  // start->end span, a POINT (dot) for instant actions (start==end).
+  // ---------------------------------------------------------------
+  function renderSeekbarMarkers() {
+    seekbarMarkers.innerHTML = '';
+    if (!sessionData || !masterPlayer || !isFinite(masterPlayer.duration) || masterPlayer.duration <= 0) return;
+    const duration = masterPlayer.duration;
+    const entries = sessionData.logEntries || [];
+    entries.forEach(entry => {
+      const s = parseTime(entry.start);
+      const e = parseTime(entry.end);
+      if (s === null) return;
+      const startPct = Math.min(100, Math.max(0, (s / duration) * 100));
+      if (e !== null && e > s + 1) {
+        // Meaningful duration (more than ~1s) -> range bar
+        const endPct = Math.min(100, Math.max(0, (e / duration) * 100));
+        const bar = document.createElement('div');
+        bar.className = 'marker-range';
+        bar.style.left = startPct + '%';
+        bar.style.width = Math.max(0.4, endPct - startPct) + '%';
+        bar.title = `${entry.actionLabel} — ${entry.start} to ${entry.end} (click to jump to Events)`;
+        bar.addEventListener('click', (ev) => { ev.stopPropagation(); seekAllTo(s); jumpToEvent(entry.id); });
+        seekbarMarkers.appendChild(bar);
+      } else {
+        // Instant action -> point marker
+        const dot = document.createElement('div');
+        dot.className = 'marker-point';
+        dot.style.left = startPct + '%';
+        dot.title = `${entry.actionLabel} — ${entry.start} (click to jump to Events)`;
+        dot.addEventListener('click', (ev) => { ev.stopPropagation(); seekAllTo(s); jumpToEvent(entry.id); });
+        seekbarMarkers.appendChild(dot);
+      }
+    });
+  }
+
+  function renderSession(data) {
+    const videoId = data.meta?.videoId || 'Unknown session';
+    videoIdLabel.textContent = videoId;
+    sessionNameLabel.textContent = videoId;
+    updateStatus();
+
+    // --- Score ---
+    let total = 0;
+    const scores = data.rubricScores || {};
+    Object.keys(scores).forEach(k => {
+      const v = parseFloat(scores[k].mark);
+      if (!isNaN(v)) total += v;
+    });
+    scoreValue.textContent = total.toFixed(1);
+    scoreOf.textContent = `${total.toFixed(1)} / ${RUBRIC_TOTAL}`;
+    const pct = RUBRIC_TOTAL > 0 ? Math.max(0, Math.min(1, total / RUBRIC_TOTAL)) : 0;
+    const filled = pct * DONUT_CIRCUMFERENCE;
+    scoreDonutFill.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${DONUT_CIRCUMFERENCE.toFixed(1)}`);
+
+    // --- Timeline ---
+    const entries = data.logEntries || [];
+    timelineList.innerHTML = '';
+    if (!entries.length) {
+      timelineList.innerHTML = '<div class="timeline-empty">No actions were detected for this session.</div>';
+    } else {
+      const sorted = [...entries].sort((a,b) => (parseTime(a.start)||0) - (parseTime(b.start)||0));
+      sorted.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.dataset.entryId = entry.id;
+        item.innerHTML = `<span class="t-time">${entry.start}</span><span class="t-label">${entry.actionLabel}</span>`;
+        item.addEventListener('click', () => {
+          const t = parseTime(entry.start);
+          if (t !== null) seekAllTo(t);
+        });
+        timelineList.appendChild(item);
+      });
+    }
+    renderSeekbarMarkers();
+
+    // --- Transcript ---
+    const segments = data.transcriptSegments || [];
+    transcriptList.innerHTML = '';
+    if (!segments.length) {
+      transcriptList.innerHTML = '<div class="timeline-empty">No transcript available for this session.</div>';
+    } else {
+      const sortedSegs = [...segments].sort((a,b) => (parseTime(a.start)||0) - (parseTime(b.start)||0));
+      sortedSegs.forEach((seg, i) => {
+        if (seg.id === undefined || seg.id === null) seg.id = `seg-${i}`;
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.dataset.segId = seg.id;
+        const speakerHtml = seg.speaker ? `<strong>${escapeHtml(seg.speaker)}:</strong> ` : '';
+        item.innerHTML = `<span class="t-time">${seg.start}</span><span class="t-label">${speakerHtml}${escapeHtml(seg.text || '')}</span>`;
+        item.addEventListener('click', () => {
+          const t = parseTime(seg.start);
+          if (t !== null) seekAllTo(t);
+        });
+        transcriptList.appendChild(item);
+      });
+    }
+
+    // --- Written feedback ---
+    overallCommentWrap.innerHTML = '';
+    if (data.overallComments && data.overallComments.trim()) {
+      const box = document.createElement('div');
+      box.className = 'overall-comment-box';
+      box.innerHTML = `<strong>Overall feedback:</strong> ${escapeHtml(data.overallComments)}`;
+      overallCommentWrap.appendChild(box);
+    }
+
+    feedbackList.innerHTML = '';
+    let anyFeedback = false;
+    RUBRIC.forEach(r => {
+      const s = scores[r.id];
+      if (!s) return; // this criterion wasn't scored in this session's data
+      anyFeedback = true;
+      const item = document.createElement('div');
+      item.className = 'feedback-item';
+      const pillClass = s.markCorrect || 'notseen';
+      const pillLabel = MARK_LABELS[s.markCorrect] || 'Not observed';
+      const comment = (s.comment || '').trim();
+      const markNum = parseFloat(s.mark);
+      const markDisplay = !isNaN(markNum) ? `${markNum} / ${r.pts}` : `&mdash; / ${r.pts}`;
+
+      // Related events: log entries whose actionCode matches this
+      // criterion's relatedActions, sorted by start time.
+      const related = entries
+        .filter(en => (r.relatedActions || []).includes(en.actionCode))
+        .sort((a,b) => (parseTime(a.start)||0) - (parseTime(b.start)||0));
+
+      item.innerHTML = `
+        <div class="f-title-row">
+          <div class="f-title-main">
+            <span class="f-title">${escapeHtml(r.title)}</span>
+            <span class="mark-pill ${pillClass}">${pillLabel}</span>
+          </div>
+          <span class="f-score">${markDisplay}</span>
+        </div>
+        <div class="f-comment ${comment ? '' : 'empty'}">${comment ? `<strong>Comment:</strong> ${escapeHtml(comment)}` : 'No additional comment for this item.'}</div>
+        ${related.length ? `<div class="f-events-row"><span class="f-events-label">Related events:</span></div>` : ''}
+      `;
+
+      if (related.length) {
+        const row = item.querySelector('.f-events-row');
+        related.forEach(en => {
+          const tag = document.createElement('span');
+          tag.className = 'event-tag';
+          tag.innerHTML = `<span class="tag-time">${en.start}</span><span>${escapeHtml(en.actionLabel)}</span>`;
+          tag.title = `Jump to ${en.start} — ${en.actionLabel} (also shown in Events)`;
+          tag.addEventListener('click', () => {
+            const t = parseTime(en.start);
+            if (t !== null) seekAllTo(t);
+            jumpToEvent(en.id);
+          });
+          row.appendChild(tag);
+        });
+      }
+
+      feedbackList.appendChild(item);
+    });
+    if (!anyFeedback) {
+      feedbackList.innerHTML = '<div class="empty-note">No feedback items found in this file.</div>';
+    }
+
+    renderSummary(data, scores, entries);
+  }
+
+  // ---------------------------------------------------------------
+  // Summary tab: session length, action count, criteria breakdown
+  // ---------------------------------------------------------------
+  function renderSummary(data, scores, entries) {
+    // Session length: prefer the loaded main video's duration, else fall
+    // back to the latest end/start timestamp seen in the log entries.
+    let durationSec = null;
+    if (masterPlayer && isFinite(masterPlayer.duration) && masterPlayer.duration > 0) {
+      durationSec = masterPlayer.duration;
+    } else if (entries.length) {
+      durationSec = entries.reduce((max, en) => {
+        const e = parseTime(en.end) ?? parseTime(en.start) ?? 0;
+        return Math.max(max, e);
+      }, 0);
+    }
+    statDuration.textContent = durationSec !== null ? fmtTime(durationSec) : '—';
+    statActions.textContent = entries.length ? String(entries.length) : '—';
+
+    const counts = { correct: 0, partial: 0, incorrect: 0, notseen: 0 };
+    let scored = 0;
+    RUBRIC.forEach(r => {
+      const s = scores[r.id];
+      if (!s) return;
+      scored++;
+      const key = counts.hasOwnProperty(s.markCorrect) ? s.markCorrect : 'notseen';
+      counts[key]++;
+    });
+
+    if (!scored) {
+      summaryBreakdownList.innerHTML = '<div class="empty-note">No feedback items found in this file.</div>';
+      return;
+    }
+    const order = ['correct', 'partial', 'incorrect', 'notseen'];
+    summaryBreakdownList.innerHTML = order.map(key => `
+      <div class="summary-row">
+        <span><span class="mark-pill ${key}">${MARK_LABELS[key]}</span></span>
+        <span class="row-count">${counts[key]}</span>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function updateStatus() {
+    const vid = sessionData?.meta?.videoId;
+    const loadedCount = players.filter(p => p.loaded).length;
+    if (vid && loadedCount) {
+      statusLine.textContent = `${vid} · ${loadedCount}/4 angles loaded`;
+    } else if (vid) {
+      statusLine.textContent = `${vid} · no videos loaded yet`;
+    } else if (loadedCount) {
+      statusLine.textContent = `${loadedCount}/4 angles loaded · no feedback file yet`;
+    } else {
+      statusLine.textContent = 'No session loaded';
+    }
+  }
+
+})();
+</script>
+
+</body>
+</html>
