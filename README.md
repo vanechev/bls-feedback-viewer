@@ -5,7 +5,6 @@ Life Support (BLS) OSCE performance: four synced camera angles, an
 AI-detected action timeline, an auto-generated transcript, and written
 rubric feedback with a total score.
 
-Built for the NURS2208 OSCE Station 3 (BLS & AED) research project.
 
 ## Privacy by design
 
@@ -80,13 +79,6 @@ mechanics beyond what's needed for transparent feedback.
 file (with a small hand-added `transcriptSegments` sample) you can use to
 test the viewer. The four matching video files are not included in this
 repository — see below.
-
-## Video files
-
-Video files are intentionally excluded from this repository (see
-`.gitignore`) since OSCE recordings are large (tens of MB each) and may
-contain identifiable participant footage. Supply your own videos through
-the app's file picker when testing.
 
 ## Status
 
