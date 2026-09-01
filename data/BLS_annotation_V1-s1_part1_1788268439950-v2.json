@@ -1,0 +1,208 @@
+{
+  "meta": {
+    "videoId": "V1-s1_part1",
+    "videoFileName": "V1-s1_part1.mp4",
+    "assessor": "",
+    "savedAt": "2026-09-01T13:13:59.949Z"
+  },
+  "logEntries": [
+    {
+      "id": 1,
+      "actionCode": "A2.1",
+      "actionLabel": "Calls the patient's name loudly (audio)",
+      "start": "00:00:05",
+      "end": "00:00:05",
+      "comment": ""
+    },
+    {
+      "id": 2,
+      "actionCode": "A1.1",
+      "actionLabel": "Looks around the environment for hazards",
+      "start": "00:00:11",
+      "end": "00:00:11",
+      "comment": ""
+    },
+    {
+      "id": 3,
+      "actionCode": "A2.2",
+      "actionLabel": "Performs a trapezius squeeze by firmly grasping the patient's shoulders",
+      "start": "00:00:14",
+      "end": "00:00:14",
+      "comment": ""
+    },
+    {
+      "id": 4,
+      "actionCode": "A3.1",
+      "actionLabel": "Presses the emergency call button",
+      "start": "00:00:20",
+      "end": "00:00:20",
+      "comment": ""
+    },
+    {
+      "id": 5,
+      "actionCode": "A4.1",
+      "actionLabel": "Moves bed out from wall and lowers the head of the bed using the emergency CPR lever",
+      "start": "00:00:32",
+      "end": "00:00:44",
+      "comment": ""
+    },
+    {
+      "id": 6,
+      "actionCode": "A6.2",
+      "actionLabel": "Counts compressions aloud (audio)",
+      "start": "00:00:58",
+      "end": "00:00:58",
+      "comment": ""
+    },
+    {
+      "id": 7,
+      "actionCode": "A6.1",
+      "actionLabel": "Commences chest compressions by placing dominant hand in the centre of the chest",
+      "start": "00:00:48",
+      "end": "00:01:07",
+      "comment": ""
+    },
+    {
+      "id": 8,
+      "actionCode": "A6.1",
+      "actionLabel": "Commences chest compressions by placing dominant hand in the centre of the chest",
+      "start": "00:01:09",
+      "end": "00:01:40",
+      "comment": ""
+    },
+    {
+      "id": 9,
+      "actionCode": "A7.1",
+      "actionLabel": "Brings the AED to bedside",
+      "start": "00:00:41",
+      "end": "00:00:41",
+      "comment": ""
+    },
+    {
+      "id": 10,
+      "actionCode": "A7.2",
+      "actionLabel": "Removes clothing to expose the chest",
+      "start": "00:00:45",
+      "end": "00:00:45",
+      "comment": ""
+    },
+    {
+      "id": 11,
+      "actionCode": "A8.1",
+      "actionLabel": "Correctly applies AED pads to the patient's bare chest in the antero-lateral position",
+      "start": "00:01:32",
+      "end": "00:01:32",
+      "comment": ""
+    },
+    {
+      "id": 12,
+      "actionCode": "A9.1",
+      "actionLabel": "Stands clear of the patient/bed",
+      "start": "00:01:40",
+      "end": "00:01:40",
+      "comment": ""
+    },
+    {
+      "id": 13,
+      "actionCode": "A9.4",
+      "actionLabel": "Verbalises \"stand clear\" (audio)",
+      "start": "00:01:54",
+      "end": "00:01:54",
+      "comment": ""
+    },
+    {
+      "id": 14,
+      "actionCode": "A9.5",
+      "actionLabel": "Presses the shock button",
+      "start": "00:02:00",
+      "end": "00:02:00",
+      "comment": ""
+    },
+    {
+      "id": 15,
+      "actionCode": "A10.1",
+      "actionLabel": "Continues chest compressions cycle",
+      "start": "00:02:08",
+      "end": "00:02:37",
+      "comment": ""
+    },
+    {
+      "id": 16,
+      "actionCode": "A10.1",
+      "actionLabel": "Continues chest compressions cycle",
+      "start": "00:02:41",
+      "end": "00:02:54",
+      "comment": ""
+    }
+  ],
+  "rubricScores": {
+    "r1": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": "all good"
+    },
+    "r2": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": "well done"
+    },
+    "r3": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": "well done, next time try to verbalise it clearly"
+    },
+    "r4-a": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r4-b": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "not observed"
+    },
+    "r5": {
+      "mark": "",
+      "markCorrect": "notseen",
+      "comment": "don't forget to do this next time"
+    },
+    "r6": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": "good compression but next time don't forget recoil"
+    },
+    "r7": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r8": {
+      "mark": "0.5",
+      "markCorrect": "partial",
+      "comment": "okish but next time make sure both pads are attached"
+    },
+    "r9": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": "all safe commands"
+    },
+    "r10": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r11": {
+      "mark": "0.5",
+      "markCorrect": "partial",
+      "comment": "ok but next time make sure there's more verbalisation and task allocation"
+    }
+  },
+  "transcriptSegments": [
+    {"id": 1, "start": "00:00:05", "end": "00:00:07", "speaker": "Student", "text": "Hi, can you hear me? Can you hear me?"},
+    {"id": 2, "start": "00:00:20", "end": "00:00:22", "speaker": "Student", "text": "I need help over here, emergency!"},
+    {"id": 3, "start": "00:00:56", "end": "00:01:08", "speaker": "Student", "text": "One, two, three, four, five, six, seven, eight, nine, ten..."},
+    {"id": 4, "start": "00:01:52", "end": "00:01:55", "speaker": "Student", "text": "Stand clear, everybody stand clear."},
+    {"id": 5, "start": "00:01:59", "end": "00:02:01", "speaker": "Student", "text": "Shocking now."}
+  ],
+  "overallComments": ""
+}
