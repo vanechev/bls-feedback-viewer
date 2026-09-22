@@ -23,6 +23,8 @@
     --green-soft: #eaf7f0;
     --muted: #8b8d97;
     --muted-soft: #f4f4f6;
+    --notseen: #8a5fb8;
+    --notseen-soft: #f3ecfb;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     --mono: 'SFMono-Regular', Consolas, Menlo, monospace;
   }
@@ -268,39 +270,36 @@
     padding: 12px 18px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     border-top: 1px solid var(--line);
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
   }
   .transport .timecode {
     font-family: var(--mono);
     font-size: 13px;
     background: var(--muted-soft);
     color: var(--ink);
-    padding: 6px 9px;
+    padding: 6px 11px;
     border-radius: 6px;
-    flex-shrink: 0;
-    white-space: nowrap;
   }
   .transport button {
     background: var(--panel);
     border: 1px solid var(--line);
     color: var(--ink);
-    padding: 7px 10px;
+    padding: 7px 12px;
     border-radius: 7px;
     cursor: pointer;
     font-size: 13px;
     font-family: var(--sans);
-    flex-shrink: 0;
-    white-space: nowrap;
   }
   .transport button:hover { background: var(--muted-soft); border-color: var(--accent); }
-  #playPauseBtn { min-width: 84px; text-align: center; }
   .cc-btn { font-weight: 600; font-size: 11.5px; letter-spacing: 0.3px; padding: 7px 10px; }
   .cc-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
   .cc-btn.active:hover { background: var(--accent-dark); }
-  .transport .rate-select { font-size: 13px; border: 1px solid var(--line); border-radius: 7px; padding: 6px 6px; background: var(--panel); flex-shrink: 0; }
+  .transport .rate-select { font-size: 13px; border: 1px solid var(--line); border-radius: 7px; padding: 6px 7px; background: var(--panel); }
+  .transport .spacer { flex: 1; }
+  .kbd-hint { font-size: 11.5px; color: var(--muted); }
+  .kbd-hint kbd { background: var(--muted-soft); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; font-family: var(--mono); }
 
   .seekbar-wrap { padding: 6px 18px 18px; }
   .seekbar-track { position: relative; height: 26px; display: flex; align-items: center; }
@@ -477,28 +476,31 @@
   .mark-pill.correct { background: var(--green-soft); color: var(--green); }
   .mark-pill.partial { background: var(--amber-soft); color: var(--amber); }
   .mark-pill.incorrect { background: var(--red-soft); color: var(--red); }
-  .mark-pill.notseen { background: var(--muted-soft); color: var(--muted); }
+  .mark-pill.notseen { background: var(--notseen-soft); color: var(--notseen); }
 
-  .f-events-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .f-events-label { font-size: 11px; color: var(--muted); margin-right: 2px; }
+  .f-events-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+  .f-events-label { font-size: 11px; font-weight: 600; color: var(--ink); margin-right: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
   .event-tag {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: var(--muted-soft);
-    color: var(--ink);
-    font-size: 11px;
-    padding: 3px 9px;
+    gap: 5px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
     border-radius: 20px;
     cursor: pointer;
-    max-width: 220px;
+    max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: background 0.15s, box-shadow 0.15s;
   }
-  .event-tag .tag-time { font-family: var(--mono); flex-shrink: 0; color: var(--muted); }
-  .event-tag:hover { background: var(--accent-soft); color: var(--accent-dark); }
-  .event-tag:hover .tag-time { color: var(--accent-dark); }
+  .event-tag .tag-time { font-family: var(--mono); flex-shrink: 0; color: var(--accent-dark); font-weight: 600; }
+  .event-tag:hover { background: var(--accent); color: white; box-shadow: 0 1px 4px rgba(99,85,224,0.35); }
+  .event-tag:hover .tag-time { color: white; }
   .overall-comment-box {
     background: var(--accent-soft);
     border-radius: 8px;
@@ -575,6 +577,8 @@
           <option value="2">2&times;</option>
         </select>
         <button id="ccToggleBtn" class="cc-btn" title="Toggle captions">CC</button>
+        <div class="spacer"></div>
+        <span class="kbd-hint"><kbd>Space</kbd> play/pause &nbsp; <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> &plusmn;1s</span>
       </div>
       <div class="seekbar-wrap">
         <div class="seekbar-track">
@@ -681,7 +685,7 @@
     {id:"r8", pts:0.5, title:"Positioning of AED pads", relatedActions:["A8.1"]},
     {id:"r9", pts:1, title:"Demonstrates appropriate and safe practice using AED", relatedActions:["A9.1","A9.2","A9.3","A9.4","A9.5"]},
     {id:"r10", pts:0.5, title:"Continues to follow instructions provided by AED and continues to deliver BLS as indicated", relatedActions:["A10.1","A10.2","A10.3"]},
-    {id:"r11", pts:0.5, title:"Evidence of effective interaction and collaboration with team members", relatedActions:[]},
+    {id:"r11", pts:0.5, title:"Evidence of effective interaction and collaboration with team members", relatedActions:["A11.1"]},
   ];
   const RUBRIC_TOTAL = RUBRIC.reduce((s,r) => s + r.pts, 0);
   const MARK_LABELS = {correct:"Correct", partial:"Partial", incorrect:"Incorrect", notseen:"Not observed"};
