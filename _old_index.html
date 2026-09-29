@@ -596,7 +596,7 @@
         <button class="tab-btn" id="summaryTabBtn">Summary</button>
       </div>
       <div style="padding:10px 18px 0; display:flex; justify-content:flex-end;">
-        <span class="ai-scored-badge"><i class="fa fa-magic"></i> Scored with AI</span>
+        
       </div>
 
       <div class="tab-panel active" id="eventsTabPanel">
@@ -630,80 +630,36 @@
 
   </div>
 
-  <!-- Evaluation: score + per-criterion feedback, full width, AI vs Educator side by side -->
+  <!-- Evaluation: score + per-criterion feedback, full width -->
   <div class="card">
     <div class="card-header">
       <h2>Evaluation</h2>
+      
     </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" id="evalAiTabBtn">Evaluation AI</button>
-      <button class="tab-btn" id="evalEducatorTabBtn">Evaluation Educator</button>
-    </div>
-
-    <div class="tab-panel active" id="evalAiTabPanel">
-      <div style="padding:14px 18px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-        <button class="file-btn ghost" id="pickAiEvalJsonBtn"><i class="fa fa-file-text"></i> Open the AI feedback.json&hellip;</button>
-        <input type="file" id="aiEvalJsonInput" accept=".json" style="display:none">
-        <span class="ai-scored-badge"><i class="fa fa-magic"></i> Scored with AI</span>
+    <div class="score-banner">
+      <div class="score-meta">
+        <div class="video-id">Session <strong id="videoIdLabel">&mdash;</strong></div>
       </div>
-      <div class="score-banner">
-        <div class="score-meta">
-          <div class="video-id">Session <strong id="videoIdLabel">&mdash;</strong></div>
+      <div class="score-donut-wrap">
+        <div class="score-donut-label">
+          <div class="score-of-line">Total score</div>
+          <div class="score-of-line"><strong id="scoreOf">&mdash; / 0</strong></div>
         </div>
-        <div class="score-donut-wrap">
-          <div class="score-donut-label">
-            <div class="score-of-line">Total score</div>
-            <div class="score-of-line"><strong id="scoreOf">&mdash; / 0</strong></div>
-          </div>
-          <div class="score-donut">
-            <svg viewBox="0 0 100 100">
-              <circle class="donut-track" cx="50" cy="50" r="40"></circle>
-              <circle class="donut-fill" id="scoreDonutFill" cx="50" cy="50" r="40" stroke-dasharray="0 251.2"></circle>
-            </svg>
-            <div class="score-donut-center">
-              <span class="score-value" id="scoreValue">&mdash;</span>
-            </div>
+        <div class="score-donut">
+          <svg viewBox="0 0 100 100">
+            <circle class="donut-track" cx="50" cy="50" r="40"></circle>
+            <circle class="donut-fill" id="scoreDonutFill" cx="50" cy="50" r="40" stroke-dasharray="0 251.2"></circle>
+          </svg>
+          <div class="score-donut-center">
+            <span class="score-value" id="scoreValue">&mdash;</span>
           </div>
         </div>
-      </div>
-      <div class="ai-scored-note">Comments and scores below were generated automatically from your video &mdash; always review them for accuracy.</div>
-      <div id="overallCommentWrap"></div>
-      <div id="feedbackList">
-        <div class="empty-note">Load the AI feedback.json to see written feedback for each criterion.</div>
       </div>
     </div>
-
-    <div class="tab-panel" id="evalEducatorTabPanel">
-      <div style="padding:14px 18px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-        <button class="file-btn ghost" id="pickEducatorEvalJsonBtn"><i class="fa fa-file-text"></i> Open the educator feedback.json&hellip;</button>
-        <input type="file" id="educatorEvalJsonInput" accept=".json" style="display:none">
-        <span class="ai-scored-badge" style="background:var(--muted-soft); color:var(--muted);"><i class="fa fa-user"></i> Scored by educator</span>
-      </div>
-      <div class="score-banner">
-        <div class="score-meta">
-          <div class="video-id">Session <strong id="videoIdLabelEdu">&mdash;</strong></div>
-        </div>
-        <div class="score-donut-wrap">
-          <div class="score-donut-label">
-            <div class="score-of-line">Total score</div>
-            <div class="score-of-line"><strong id="scoreOfEdu">&mdash; / 0</strong></div>
-          </div>
-          <div class="score-donut">
-            <svg viewBox="0 0 100 100">
-              <circle class="donut-track" cx="50" cy="50" r="40"></circle>
-              <circle class="donut-fill" id="scoreDonutFillEdu" cx="50" cy="50" r="40" stroke-dasharray="0 251.2"></circle>
-            </svg>
-            <div class="score-donut-center">
-              <span class="score-value" id="scoreValueEdu">&mdash;</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="ai-scored-note">Comments and scores below were written by your instructor &mdash; use this to compare against the AI evaluation.</div>
-      <div id="overallCommentWrapEdu"></div>
-      <div id="feedbackListEdu">
-        <div class="empty-note">Load the educator feedback.json to see written feedback for each criterion.</div>
-      </div>
+    
+    <div id="overallCommentWrap"></div>
+    <div id="feedbackList">
+      <div class="empty-note">Load your feedback file to see written feedback for each criterion.</div>
     </div>
   </div>
 
@@ -772,23 +728,6 @@
   const statActions = document.getElementById('statActions');
   const summaryBreakdownList = document.getElementById('summaryBreakdownList');
 
-  // Evaluation AI / Evaluation Educator tabs + their own load buttons
-  const evalAiTabBtn = document.getElementById('evalAiTabBtn');
-  const evalEducatorTabBtn = document.getElementById('evalEducatorTabBtn');
-  const evalAiTabPanel = document.getElementById('evalAiTabPanel');
-  const evalEducatorTabPanel = document.getElementById('evalEducatorTabPanel');
-  const pickAiEvalJsonBtn = document.getElementById('pickAiEvalJsonBtn');
-  const aiEvalJsonInput = document.getElementById('aiEvalJsonInput');
-  const pickEducatorEvalJsonBtn = document.getElementById('pickEducatorEvalJsonBtn');
-  const educatorEvalJsonInput = document.getElementById('educatorEvalJsonInput');
-  const scoreValueEdu = document.getElementById('scoreValueEdu');
-  const scoreOfEdu = document.getElementById('scoreOfEdu');
-  const scoreDonutFillEdu = document.getElementById('scoreDonutFillEdu');
-  const videoIdLabelEdu = document.getElementById('videoIdLabelEdu');
-  const feedbackListEdu = document.getElementById('feedbackListEdu');
-  const overallCommentWrapEdu = document.getElementById('overallCommentWrapEdu');
-  let educatorSessionData = null;
-
   // ---------------------------------------------------------------
   // Tabs: Events / Transcript / Summary
   // ---------------------------------------------------------------
@@ -807,23 +746,6 @@
   eventsTabBtn.addEventListener('click', () => activateTab('events'));
   transcriptTabBtn.addEventListener('click', () => activateTab('transcript'));
   summaryTabBtn.addEventListener('click', () => activateTab('summary'));
-
-  // ---------------------------------------------------------------
-  // Tabs: Evaluation AI / Evaluation Educator (independent of the tabs above)
-  // ---------------------------------------------------------------
-  const EVAL_TABS = {
-    ai: { btn: evalAiTabBtn, panel: evalAiTabPanel },
-    educator: { btn: evalEducatorTabBtn, panel: evalEducatorTabPanel },
-  };
-  function activateEvalTab(which) {
-    Object.keys(EVAL_TABS).forEach(key => {
-      const isActive = key === which;
-      EVAL_TABS[key].btn.classList.toggle('active', isActive);
-      EVAL_TABS[key].panel.classList.toggle('active', isActive);
-    });
-  }
-  evalAiTabBtn.addEventListener('click', () => activateEvalTab('ai'));
-  evalEducatorTabBtn.addEventListener('click', () => activateEvalTab('educator'));
 
   // Switch to the Events tab, scroll to the matching timeline row, and
   // briefly highlight it — used when a "related event" tag is clicked
@@ -958,18 +880,12 @@
     if (!files.length) return;
     // Sort by filename for a stable, predictable angle order
     files.sort((a,b) => a.name.localeCompare(b.name));
-    loadVideosFromSources(files.map(f => ({ url: URL.createObjectURL(f), label: f.name })));
-  });
-
-  // Loads up to 4 video sources into the player grid. `sources` is an
-  // array of {url, label} — used both by the local file picker (object
-  // URLs) and by the URL-based auto-load flow (remote Drive URLs).
-  function loadVideosFromSources(sources) {
-    if (!sources || !sources.length) return;
     let firstLoadedInThisBatch = null;
-    sources.slice(0, 4).forEach((src, i) => {
+    files.forEach((file, i) => {
+      if (i >= 4) return;
       const p = players[i];
-      p.el.src = src.url;
+      const url = URL.createObjectURL(file);
+      p.el.src = url;
       p.el.style.display = 'block';
       p.loaded = true;
       if (masterPlayer === null && firstLoadedInThisBatch === null) {
@@ -980,7 +896,7 @@
     if (masterPlayer === null && firstLoadedInThisBatch) {
       masterPlayer = firstLoadedInThisBatch.el;
     }
-    videoLoadStatus.textContent = `${Math.min(sources.length, 4)} of 4 angles loaded`;
+    videoLoadStatus.textContent = `${files.length} of 4 angles loaded`;
     renderVideoPanel();
     updateStatus();
     // Safety net: if metadata already loaded before our listener attached
@@ -988,7 +904,7 @@
     if (masterPlayer && isFinite(masterPlayer.duration) && masterPlayer.duration > 0) {
       renderSeekbarMarkers();
     }
-  }
+  });
 
   function wirePlayerSync(p) {
     // Only the FIRST loaded player (across the whole session) drives the
@@ -1094,61 +1010,14 @@
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        loadSessionData(JSON.parse(ev.target.result));
+        sessionData = JSON.parse(ev.target.result);
+        renderSession(sessionData);
       } catch (err) {
         alert('Could not read this feedback file: ' + err.message);
       }
     };
     reader.readAsText(file);
   });
-
-  function loadSessionData(data) {
-    sessionData = data;
-    renderSession(sessionData);
-  }
-
-  // ---------------------------------------------------------------
-  // Auto-load from a hosted link: ?student=ID in the page URL.
-  // Fetches data/ID.json (same-origin, e.g. served by GitHub Pages)
-  // which carries both the feedback data and Google Drive file IDs
-  // for the 4 camera angles. Falls back silently to the manual file
-  // pickers above if no ?student= param is present, or if loading
-  // fails for any reason.
-  // ---------------------------------------------------------------
-  function driveDirectUrl(fileId) {
-    // Standard Drive direct-download link. confirm=t skips the
-    // "can't scan this file for viruses" interstitial Drive shows for
-    // larger files; harmless to include on smaller files too.
-    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}&confirm=t`;
-  }
-
-  async function autoLoadFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const studentId = params.get('student');
-    if (!studentId) return;
-
-    videoLoadStatus.textContent = 'Loading your session…';
-    try {
-      const res = await fetch(`data/${encodeURIComponent(studentId)}.json`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`no session found for "${studentId}" (HTTP ${res.status})`);
-      const data = await res.json();
-
-      if (Array.isArray(data.videos) && data.videos.length) {
-        loadVideosFromSources(
-          data.videos.slice(0, 4).map(v => ({ url: driveDirectUrl(v.driveId), label: v.label || '' }))
-        );
-      }
-      loadSessionData(data);
-
-      // This student has a pre-loaded session — hide the manual pickers.
-      const setupBar = document.querySelector('.setup-bar');
-      if (setupBar) setupBar.style.display = 'none';
-    } catch (err) {
-      videoLoadStatus.textContent = `Couldn't auto-load (${err.message}). Use the buttons below to load your files manually.`;
-    }
-  }
-
-  autoLoadFromUrl();
 
   // ---------------------------------------------------------------
   // Seekbar markers: a duration RANGE (bar) for actions with a real
@@ -1186,131 +1055,24 @@
     });
   }
 
-  // Generic renderer for one Evaluation panel (score donut + written
-  // feedback list). Used for both the AI tab and the Educator tab —
-  // `els` picks which set of DOM elements to fill in, `linkEntries` is
-  // the shared logEntries array (from the main session file) used to
-  // resolve each criterion's "Related events" tags, since detected
-  // actions belong to the video, not to whichever json is scoring it.
-  function renderEvaluation(data, els, linkEntries) {
+  function renderSession(data) {
     const videoId = data.meta?.videoId || 'Unknown session';
-    els.videoIdLabel.textContent = videoId;
+    videoIdLabel.textContent = videoId;
+    sessionNameLabel.textContent = videoId;
+    updateStatus();
 
+    // --- Score ---
     let total = 0;
     const scores = data.rubricScores || {};
     Object.keys(scores).forEach(k => {
       const v = parseFloat(scores[k].mark);
       if (!isNaN(v)) total += v;
     });
-    els.scoreValue.textContent = total.toFixed(1);
-    els.scoreOf.textContent = `${total.toFixed(1)} / ${RUBRIC_TOTAL}`;
+    scoreValue.textContent = total.toFixed(1);
+    scoreOf.textContent = `${total.toFixed(1)} / ${RUBRIC_TOTAL}`;
     const pct = RUBRIC_TOTAL > 0 ? Math.max(0, Math.min(1, total / RUBRIC_TOTAL)) : 0;
     const filled = pct * DONUT_CIRCUMFERENCE;
-    els.scoreDonutFill.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${DONUT_CIRCUMFERENCE.toFixed(1)}`);
-
-    els.overallCommentWrap.innerHTML = '';
-    if (data.overallComments && data.overallComments.trim()) {
-      const box = document.createElement('div');
-      box.className = 'overall-comment-box';
-      box.innerHTML = `<strong>Overall feedback:</strong> ${escapeHtml(data.overallComments)}`;
-      els.overallCommentWrap.appendChild(box);
-    }
-
-    els.feedbackList.innerHTML = '';
-    let anyFeedback = false;
-    RUBRIC.forEach(r => {
-      const s = scores[r.id];
-      if (!s) return; // this criterion wasn't scored in this session's data
-      anyFeedback = true;
-      const item = document.createElement('div');
-      item.className = 'feedback-item';
-      const pillClass = s.markCorrect || 'notseen';
-      const pillLabel = MARK_LABELS[s.markCorrect] || 'Not observed';
-      const comment = (s.comment || '').trim();
-      const markNum = parseFloat(s.mark);
-      const markDisplay = !isNaN(markNum) ? `${markNum} / ${r.pts}` : `&mdash; / ${r.pts}`;
-
-      const related = (linkEntries || [])
-        .filter(en => (r.relatedActions || []).includes(en.actionCode))
-        .sort((a,b) => (parseTime(a.start)||0) - (parseTime(b.start)||0));
-
-      item.innerHTML = `
-        <div class="f-title-row">
-          <div class="f-title-main">
-            <span class="f-title">${escapeHtml(r.title)}</span>
-            <span class="mark-pill ${pillClass}">${pillLabel}</span>
-          </div>
-          <span class="f-score">${markDisplay}</span>
-        </div>
-        <div class="f-comment ${comment ? '' : 'empty'}">${comment ? `<strong>Comment:</strong> ${escapeHtml(comment)}` : 'No additional comment for this item.'}</div>
-        ${related.length ? `<div class="f-events-row"><span class="f-events-label">Related events:</span></div>` : ''}
-      `;
-
-      if (related.length) {
-        const row = item.querySelector('.f-events-row');
-        related.forEach(en => {
-          const tag = document.createElement('span');
-          tag.className = 'event-tag';
-          tag.innerHTML = `<span class="tag-time">${en.start}</span><span>${escapeHtml(en.actionLabel)}</span>`;
-          tag.title = `Jump to ${en.start} — ${en.actionLabel} (also shown in Events)`;
-          tag.addEventListener('click', () => {
-            const t = parseTime(en.start);
-            if (t !== null) seekAllTo(t);
-            jumpToEvent(en.id);
-          });
-          row.appendChild(tag);
-        });
-      }
-
-      els.feedbackList.appendChild(item);
-    });
-    if (!anyFeedback) {
-      els.feedbackList.innerHTML = '<div class="empty-note">No feedback items found in this file.</div>';
-    }
-    return scores;
-  }
-
-  const AI_EVAL_ELS = {
-    videoIdLabel, scoreValue, scoreOf, scoreDonutFill, overallCommentWrap, feedbackList
-  };
-  const EDUCATOR_EVAL_ELS = {
-    videoIdLabel: videoIdLabelEdu, scoreValue: scoreValueEdu, scoreOf: scoreOfEdu,
-    scoreDonutFill: scoreDonutFillEdu, overallCommentWrap: overallCommentWrapEdu, feedbackList: feedbackListEdu
-  };
-
-  function loadEducatorData(data) {
-    educatorSessionData = data;
-    const linkEntries = (sessionData && sessionData.logEntries) || data.logEntries || [];
-    renderEvaluation(data, EDUCATOR_EVAL_ELS, linkEntries);
-  }
-
-  pickEducatorEvalJsonBtn.addEventListener('click', () => educatorEvalJsonInput.click());
-  educatorEvalJsonInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        loadEducatorData(JSON.parse(ev.target.result));
-      } catch (err) {
-        alert('Could not read this feedback file: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  // The "Open the AI feedback.json…" button inside the Evaluation AI
-  // tab triggers the same loader as the main setup-bar button, since
-  // the AI json also carries the detected events/transcript that drive
-  // the Events/Transcript/Summary tabs and the seekbar markers.
-  pickAiEvalJsonBtn.addEventListener('click', () => jsonInput.click());
-
-  function renderSession(data) {
-    const videoId = data.meta?.videoId || 'Unknown session';
-    sessionNameLabel.textContent = videoId;
-    updateStatus();
-
-    renderEvaluation(data, AI_EVAL_ELS, data.logEntries || []);
+    scoreDonutFill.setAttribute('stroke-dasharray', `${filled.toFixed(1)} ${DONUT_CIRCUMFERENCE.toFixed(1)}`);
 
     // --- Timeline ---
     const entries = data.logEntries || [];
@@ -1355,7 +1117,69 @@
       });
     }
 
-    const scores = data.rubricScores || {};
+    // --- Written feedback ---
+    overallCommentWrap.innerHTML = '';
+    if (data.overallComments && data.overallComments.trim()) {
+      const box = document.createElement('div');
+      box.className = 'overall-comment-box';
+      box.innerHTML = `<strong>Overall feedback:</strong> ${escapeHtml(data.overallComments)}`;
+      overallCommentWrap.appendChild(box);
+    }
+
+    feedbackList.innerHTML = '';
+    let anyFeedback = false;
+    RUBRIC.forEach(r => {
+      const s = scores[r.id];
+      if (!s) return; // this criterion wasn't scored in this session's data
+      anyFeedback = true;
+      const item = document.createElement('div');
+      item.className = 'feedback-item';
+      const pillClass = s.markCorrect || 'notseen';
+      const pillLabel = MARK_LABELS[s.markCorrect] || 'Not observed';
+      const comment = (s.comment || '').trim();
+      const markNum = parseFloat(s.mark);
+      const markDisplay = !isNaN(markNum) ? `${markNum} / ${r.pts}` : `&mdash; / ${r.pts}`;
+
+      // Related events: log entries whose actionCode matches this
+      // criterion's relatedActions, sorted by start time.
+      const related = entries
+        .filter(en => (r.relatedActions || []).includes(en.actionCode))
+        .sort((a,b) => (parseTime(a.start)||0) - (parseTime(b.start)||0));
+
+      item.innerHTML = `
+        <div class="f-title-row">
+          <div class="f-title-main">
+            <span class="f-title">${escapeHtml(r.title)}</span>
+            <span class="mark-pill ${pillClass}">${pillLabel}</span>
+          </div>
+          <span class="f-score">${markDisplay}</span>
+        </div>
+        <div class="f-comment ${comment ? '' : 'empty'}">${comment ? `<strong>Comment:</strong> ${escapeHtml(comment)}` : 'No additional comment for this item.'}</div>
+        ${related.length ? `<div class="f-events-row"><span class="f-events-label">Related events:</span></div>` : ''}
+      `;
+
+      if (related.length) {
+        const row = item.querySelector('.f-events-row');
+        related.forEach(en => {
+          const tag = document.createElement('span');
+          tag.className = 'event-tag';
+          tag.innerHTML = `<span class="tag-time">${en.start}</span><span>${escapeHtml(en.actionLabel)}</span>`;
+          tag.title = `Jump to ${en.start} — ${en.actionLabel} (also shown in Events)`;
+          tag.addEventListener('click', () => {
+            const t = parseTime(en.start);
+            if (t !== null) seekAllTo(t);
+            jumpToEvent(en.id);
+          });
+          row.appendChild(tag);
+        });
+      }
+
+      feedbackList.appendChild(item);
+    });
+    if (!anyFeedback) {
+      feedbackList.innerHTML = '<div class="empty-note">No feedback items found in this file.</div>';
+    }
+
     renderSummary(data, scores, entries);
   }
 
