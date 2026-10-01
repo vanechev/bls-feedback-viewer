@@ -245,6 +245,24 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* ---------- Evaluation tab bar: more prominent than Events/Transcript/Summary ---------- */
+  .tab-bar-lg { gap: 28px; }
+  .tab-bar-lg .tab-btn { font-size: 16px; font-weight: 600; padding: 16px 2px; color: var(--ink); }
+  .tab-bar-lg .tab-btn.active { color: var(--accent); border-bottom-width: 3px; }
+  #splitViewBtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ---------- Split view: AI + Educator feedback side by side ---------- */
+  #evalPanelsWrap.split-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  #evalPanelsWrap.split-mode .tab-panel { display: block; }
+  #evalPanelsWrap.split-mode .tab-panel > *:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+
+  /* ---------- Active-now highlighting for Events/Transcript rows ---------- */
+  .timeline-item.active-now { background: var(--accent-soft); border-left: 3px solid var(--accent); padding-left: 15px; }
+
+  /* ---------- "Item N" tag shown on events linked to a rubric item ---------- */
+  .item-tag { font-size: 10.5px; font-weight: 600; color: var(--accent-dark); background: var(--accent-soft); padding: 1px 7px; border-radius: 10px; margin-left: 6px; white-space: nowrap; }
+  .item-num-tag { display: inline-block; font-size: 10.5px; font-weight: 600; color: var(--accent-dark); background: var(--accent-soft); padding: 1px 7px; border-radius: 10px; margin-right: 8px; white-space: nowrap; vertical-align: 1px; }
+
   /* ---------- Summary tab ---------- */
   .summary-stats {
     display: grid;
@@ -466,12 +484,14 @@
   /* ---------- Feedback ---------- */
   .feedback-item { border-bottom: 1px solid var(--line); padding: 16px 18px; }
   .feedback-item:last-child { border-bottom: none; }
-  .feedback-item .f-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .feedback-item .f-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
   .feedback-item .f-title-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .feedback-item .f-title { font-size: 13.5px; font-weight: 600; }
-  .feedback-item .f-score { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
-  .feedback-item .f-comment { font-size: 13.5px; line-height: 1.6; color: var(--ink); }
-  .feedback-item .f-comment.empty { color: var(--muted); font-style: italic; }
+  .feedback-item .f-score-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .feedback-item .f-score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; background: var(--panel); }
+  .feedback-item .f-comment { font-size: 13px; line-height: 1.6; color: var(--ink); background: var(--muted-soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 8px 12px; margin-top: 2px; }
+  .feedback-item .f-comment strong { color: var(--accent-dark); }
+  .feedback-item .f-comment.empty { color: var(--muted); font-style: italic; background: transparent; border-left-color: var(--line); }
   .mark-pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; flex-shrink: 0; }
   .mark-pill.correct { background: var(--green-soft); color: var(--green); }
   .mark-pill.partial { background: var(--amber-soft); color: var(--amber); }
@@ -633,13 +653,15 @@
   <!-- Evaluation: score + per-criterion feedback, full width, AI vs Educator side by side -->
   <div class="card">
     <div class="card-header">
-      <h2>Evaluation</h2>
+      <h2>Rubric assessment</h2>
+      <button class="file-btn ghost" id="splitViewBtn"><i class="fa fa-columns"></i> Compare side by side</button>
     </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" id="evalAiTabBtn">Evaluation AI</button>
-      <button class="tab-btn" id="evalEducatorTabBtn">Evaluation Educator</button>
+    <div class="tab-bar tab-bar-lg" id="evalTabBar">
+      <button class="tab-btn active" id="evalAiTabBtn">AI Feedback</button>
+      <button class="tab-btn" id="evalEducatorTabBtn">Educator Feedback</button>
     </div>
 
+    <div id="evalPanelsWrap">
     <div class="tab-panel active" id="evalAiTabPanel">
       <div style="padding:14px 18px 0; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
         <button class="file-btn ghost" id="pickAiEvalJsonBtn"><i class="fa fa-file-text"></i> Open the AI feedback.json&hellip;</button>
@@ -705,6 +727,7 @@
         <div class="empty-note">Load the educator feedback.json to see written feedback for each criterion.</div>
       </div>
     </div>
+    </div>
   </div>
 
 </div>
@@ -733,6 +756,18 @@
   ];
   const RUBRIC_TOTAL = RUBRIC.reduce((s,r) => s + r.pts, 0);
   const MARK_LABELS = {correct:"Correct", partial:"Partial", incorrect:"Incorrect", notseen:"Not observed"};
+
+  // 1-based "Item N" numbering in RUBRIC order, and a lookup from an
+  // action code to the item number(s) whose relatedActions include it
+  // (used to tag each row in the Events list with its rubric item).
+  const RUBRIC_ITEM_NUM = {};
+  const ACTION_CODE_TO_ITEMS = {};
+  RUBRIC.forEach((r, i) => {
+    RUBRIC_ITEM_NUM[r.id] = i + 1;
+    (r.relatedActions || []).forEach(code => {
+      (ACTION_CODE_TO_ITEMS[code] ||= []).push(i + 1);
+    });
+  });
 
   // ---------------------------------------------------------------
   // Elements
@@ -787,6 +822,9 @@
   const videoIdLabelEdu = document.getElementById('videoIdLabelEdu');
   const feedbackListEdu = document.getElementById('feedbackListEdu');
   const overallCommentWrapEdu = document.getElementById('overallCommentWrapEdu');
+  const splitViewBtn = document.getElementById('splitViewBtn');
+  const evalPanelsWrap = document.getElementById('evalPanelsWrap');
+  const evalTabBar = document.getElementById('evalTabBar');
   let educatorSessionData = null;
 
   // ---------------------------------------------------------------
@@ -825,6 +863,56 @@
   evalAiTabBtn.addEventListener('click', () => activateEvalTab('ai'));
   evalEducatorTabBtn.addEventListener('click', () => activateEvalTab('educator'));
 
+  // Split view: show AI + Educator feedback side by side instead of
+  // switching between tabs. On by default. Remembers which tab was
+  // active so it can restore the single-panel view correctly if the
+  // user turns split view off.
+  let splitViewOn = true;
+  let lastEvalTab = 'ai';
+  evalAiTabBtn.addEventListener('click', () => { lastEvalTab = 'ai'; });
+  evalEducatorTabBtn.addEventListener('click', () => { lastEvalTab = 'educator'; });
+  function applySplitViewUI() {
+    splitViewBtn.classList.toggle('active', splitViewOn);
+    splitViewBtn.innerHTML = splitViewOn
+      ? '<i class="fa fa-columns"></i> Exit split view'
+      : '<i class="fa fa-columns"></i> Compare side by side';
+    evalPanelsWrap.classList.toggle('split-mode', splitViewOn);
+    evalTabBar.style.display = splitViewOn ? 'none' : '';
+    if (!splitViewOn) {
+      activateEvalTab(lastEvalTab);
+      clearSplitRowAlignment();
+    } else {
+      alignSplitRows();
+    }
+  }
+  splitViewBtn.addEventListener('click', () => {
+    splitViewOn = !splitViewOn;
+    applySplitViewUI();
+  });
+  window.addEventListener('resize', () => { if (splitViewOn) alignSplitRows(); });
+  applySplitViewUI(); // apply the default (split view on) at load
+
+  // In split view, pair up each rubric item between the AI list and the
+  // Educator list (matched by data-rule-id) and give both the taller of
+  // the two natural heights, so items 1, 2, 3... line up as true rows
+  // across the two columns instead of drifting once comments/related
+  // events of different lengths push one column out of sync.
+  function clearSplitRowAlignment() {
+    document.querySelectorAll('#feedbackList .feedback-item, #feedbackListEdu .feedback-item')
+      .forEach(el => { el.style.minHeight = ''; });
+  }
+  function alignSplitRows() {
+    clearSplitRowAlignment();
+    RUBRIC.forEach(r => {
+      const aiEl = feedbackList.querySelector(`.feedback-item[data-rule-id="${r.id}"]`);
+      const eduEl = feedbackListEdu.querySelector(`.feedback-item[data-rule-id="${r.id}"]`);
+      if (!aiEl || !eduEl) return;
+      const h = Math.max(aiEl.getBoundingClientRect().height, eduEl.getBoundingClientRect().height);
+      aiEl.style.minHeight = h + 'px';
+      eduEl.style.minHeight = h + 'px';
+    });
+  }
+
   // Switch to the Events tab, scroll to the matching timeline row, and
   // briefly highlight it — used when a "related event" tag is clicked
   // from the Evaluation card below.
@@ -850,13 +938,49 @@
   // ---------------------------------------------------------------
   // Caption overlay (CC toggle) on the main video
   // ---------------------------------------------------------------
-  let captionsOn = false;
+  let captionsOn = true; // captions on by default
+  ccToggleBtn.classList.add('active');
+  captionOverlay.style.display = '';
   ccToggleBtn.addEventListener('click', () => {
     captionsOn = !captionsOn;
     ccToggleBtn.classList.toggle('active', captionsOn);
     captionOverlay.style.display = captionsOn ? '' : 'none';
     if (!captionsOn) captionOverlay.innerHTML = '';
   });
+
+  // Highlight the Events-tab row and Transcript-tab row that are
+  // "live" at the current playback position, so the side panel tracks
+  // what's happening in the video without needing a click.
+  function updateActiveHighlights(currentTime) {
+    if (!sessionData) return;
+    const entries = sessionData.logEntries || [];
+    timelineList.querySelectorAll('.timeline-item').forEach(row => {
+      const entry = entries.find(en => String(en.id) === row.dataset.entryId);
+      let active = false;
+      if (entry) {
+        const s = parseTime(entry.start);
+        const e = parseTime(entry.end);
+        if (s !== null) {
+          active = (e !== null && e > s + 1)
+            ? (currentTime >= s && currentTime <= e)
+            : (currentTime >= s - 0.4 && currentTime <= s + 1.5);
+        }
+      }
+      row.classList.toggle('active-now', active);
+    });
+
+    const segments = sessionData.transcriptSegments || [];
+    transcriptList.querySelectorAll('.timeline-item').forEach(row => {
+      const seg = segments.find(sg => String(sg.id) === row.dataset.segId);
+      let active = false;
+      if (seg) {
+        const s = parseTime(seg.start);
+        const e = parseTime(seg.end);
+        active = s !== null && e !== null && currentTime >= s && currentTime <= e;
+      }
+      row.classList.toggle('active-now', active);
+    });
+  }
 
   function updateCaptionOverlay(currentTime) {
     if (!captionsOn || !sessionData) return;
@@ -1002,6 +1126,7 @@
         }
         timecode.textContent = `${fmtTime(p.el.currentTime)} / ${fmtTime(p.el.duration)}`;
         updateCaptionOverlay(p.el.currentTime);
+        updateActiveHighlights(p.el.currentTime);
       });
       p.el.addEventListener('play', () => { playPauseBtn.innerHTML = '&#10074;&#10074; Pause'; syncAll('play'); });
       p.el.addEventListener('pause', () => { playPauseBtn.innerHTML = '&#9654; Play'; syncAll('pause'); });
@@ -1224,6 +1349,7 @@
       anyFeedback = true;
       const item = document.createElement('div');
       item.className = 'feedback-item';
+      item.dataset.ruleId = r.id;
       const pillClass = s.markCorrect || 'notseen';
       const pillLabel = MARK_LABELS[s.markCorrect] || 'Not observed';
       const comment = (s.comment || '').trim();
@@ -1237,11 +1363,11 @@
       item.innerHTML = `
         <div class="f-title-row">
           <div class="f-title-main">
-            <span class="f-title">${escapeHtml(r.title)}</span>
+            <span class="f-title"><span class="item-num-tag">Item ${RUBRIC_ITEM_NUM[r.id]}</span>${escapeHtml(r.title)}</span>
             <span class="mark-pill ${pillClass}">${pillLabel}</span>
           </div>
-          <span class="f-score">${markDisplay}</span>
         </div>
+        <div class="f-score-row"><span class="f-score">${markDisplay}</span></div>
         <div class="f-comment ${comment ? '' : 'empty'}">${comment ? `<strong>Comment:</strong> ${escapeHtml(comment)}` : 'No additional comment for this item.'}</div>
         ${related.length ? `<div class="f-events-row"><span class="f-events-label">Related events:</span></div>` : ''}
       `;
@@ -1280,8 +1406,10 @@
 
   function loadEducatorData(data) {
     educatorSessionData = data;
-    const linkEntries = (sessionData && sessionData.logEntries) || data.logEntries || [];
-    renderEvaluation(data, EDUCATOR_EVAL_ELS, linkEntries);
+    // Educator feedback intentionally carries no video/event links — never
+    // show "Related events" tags here, even if an AI session is loaded.
+    renderEvaluation(data, EDUCATOR_EVAL_ELS, []);
+    if (splitViewOn) alignSplitRows();
   }
 
   pickEducatorEvalJsonBtn.addEventListener('click', () => educatorEvalJsonInput.click());
@@ -1311,6 +1439,7 @@
     updateStatus();
 
     renderEvaluation(data, AI_EVAL_ELS, data.logEntries || []);
+    if (splitViewOn) alignSplitRows();
 
     // --- Timeline ---
     const entries = data.logEntries || [];
@@ -1323,7 +1452,9 @@
         const item = document.createElement('div');
         item.className = 'timeline-item';
         item.dataset.entryId = entry.id;
-        item.innerHTML = `<span class="t-time">${entry.start}</span><span class="t-label">${entry.actionLabel}</span>`;
+        const itemNums = ACTION_CODE_TO_ITEMS[entry.actionCode] || [];
+        const itemTags = itemNums.map(n => `<span class="item-tag">Item ${n}</span>`).join('');
+        item.innerHTML = `<span class="t-time">${entry.start}</span><span class="t-label">${entry.actionLabel}${itemTags}</span>`;
         item.addEventListener('click', () => {
           const t = parseTime(entry.start);
           if (t !== null) seekAllTo(t);
