@@ -1317,8 +1317,8 @@
   // the shared logEntries array (from the main session file) used to
   // resolve each criterion's "Related events" tags, since detected
   // actions belong to the video, not to whichever json is scoring it.
-  function renderEvaluation(data, els, linkEntries) {
-    const videoId = data.meta?.videoId || 'Unknown session';
+  function renderEvaluation(data, els, linkEntries, labelOverride) {
+    const videoId = labelOverride || data.meta?.videoId || 'Unknown session';
     els.videoIdLabel.textContent = videoId;
 
     let total = 0;
@@ -1408,7 +1408,10 @@
     educatorSessionData = data;
     // Educator feedback intentionally carries no video/event links — never
     // show "Related events" tags here, even if an AI session is loaded.
-    renderEvaluation(data, EDUCATOR_EVAL_ELS, []);
+    // Show the same session label as the AI panel when it's loaded —
+    // the AI and educator json files sometimes use different videoId
+    // conventions (e.g. "session7" vs "S004") for the same session.
+    renderEvaluation(data, EDUCATOR_EVAL_ELS, [], sessionData?.meta?.videoId);
     if (splitViewOn) alignSplitRows();
   }
 
@@ -1439,6 +1442,9 @@
     updateStatus();
 
     renderEvaluation(data, AI_EVAL_ELS, data.logEntries || []);
+    // Keep the Educator panel's session label in sync if it was loaded
+    // first (normally the AI json loads first, but don't assume order).
+    if (educatorSessionData) videoIdLabelEdu.textContent = videoId;
     if (splitViewOn) alignSplitRows();
 
     // --- Timeline ---
