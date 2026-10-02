@@ -1,0 +1,235 @@
+{
+  "videos": [
+    {
+      "label": "Full",
+      "driveId": "1deU91GbmQwZSt3lM2W-ZwuDNnooQWFDt"
+    }
+  ],
+  "meta": {
+    "videoId": "participant63",
+    "videoFileName": "P-063-s1-full.mp4",
+    "assessor": "",
+    "savedAt": "2026-10-01T00:05:33.087Z"
+  },
+  "logEntries": [
+    {
+      "id": 1,
+      "actionCode": "A1.2",
+      "actionLabel": "Verbalises potential dangers",
+      "start": "00:00:17",
+      "end": "00:00:17",
+      "comment": ""
+    },
+    {
+      "id": 2,
+      "actionCode": "A6.3",
+      "actionLabel": "Performs compressions at depth 5-6cms and rate 100-120bpm",
+      "start": "00:01:01",
+      "end": "00:01:49",
+      "comment": ""
+    },
+    {
+      "id": 3,
+      "actionCode": "A7.1",
+      "actionLabel": "Brings AED to bedside",
+      "start": "00:01:34",
+      "end": "00:01:34",
+      "comment": ""
+    },
+    {
+      "id": 4,
+      "actionCode": "A11.1",
+      "actionLabel": "Demonstrates effective teamwork and collaboration",
+      "start": "00:02:13",
+      "end": "00:02:13",
+      "comment": ""
+    },
+    {
+      "id": 5,
+      "actionCode": "A9.5",
+      "actionLabel": "Presses shock button",
+      "start": "00:02:47",
+      "end": "00:02:47",
+      "comment": ""
+    },
+    {
+      "id": 6,
+      "actionCode": "A10.1",
+      "actionLabel": "Continues chest compressions cycle",
+      "start": "00:02:59",
+      "end": "00:03:05",
+      "comment": ""
+    },
+    {
+      "id": 7,
+      "actionCode": "A10.1",
+      "actionLabel": "Continues chest compressions cycle",
+      "start": "00:03:42",
+      "end": "00:04:35",
+      "comment": ""
+    }
+  ],
+  "rubricScores": {
+    "r1": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r2": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "A trapezius squeeze and responsiveness check were narrated (\u201cno response\u201d), but the action itself was not clearly visible."
+    },
+    "r3": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "A call for help or activation of emergency assistance was not clearly heard or confirmed."
+    },
+    "r4-a": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "No patient positioning (bed adjustment or repositioning) was clearly visible before compressions began."
+    },
+    "r4-b": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "No head-tilt\u2013chin-lift or airway-clearing manoeuvre was visible before the breathing check."
+    },
+    "r5": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "A look-listen-feel technique and its 10-second duration were narrated, but the physical breathing-check manoeuvre was not clearly demonstrated."
+    },
+    "r6": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r7": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r8": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "AED pads were applied, but anterior-lateral positioning and pad-to-skin contact were not clearly visible."
+    },
+    "r9": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r10": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r11": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    }
+  },
+  "transcriptSegments": [
+    {
+      "id": 1,
+      "start": "00:00:04",
+      "end": "00:00:19",
+      "speaker": "",
+      "text": "Hi, Mr. Nugent. I'll be your nurse today. Mr. Nugent? Mr. Nugent. Checking for typical squeeze, no response. Looking for any danger."
+    },
+    {
+      "id": 2,
+      "start": "00:00:19",
+      "end": "00:00:33",
+      "speaker": "",
+      "text": "No danger. Checking for response. And you just want to catch it and look, listen and feel for 10 seconds."
+    },
+    {
+      "id": 3,
+      "start": "00:00:34",
+      "end": "00:00:43",
+      "speaker": "",
+      "text": "no rise and fall of the chest, so for convention's sake, it's actually pretty hard not to do this."
+    },
+    {
+      "id": 4,
+      "start": "00:01:44",
+      "end": "00:01:53",
+      "speaker": "",
+      "text": "The chest. Right."
+    },
+    {
+      "id": 5,
+      "start": "00:01:55",
+      "end": "00:02:07",
+      "speaker": "",
+      "text": "So long."
+    },
+    {
+      "id": 6,
+      "start": "00:02:13",
+      "end": "00:02:18",
+      "speaker": "",
+      "text": "Package and apply pads to patient spare chest."
+    },
+    {
+      "id": 7,
+      "start": "00:02:24",
+      "end": "00:02:37",
+      "speaker": "",
+      "text": "Analyzing heart rhythm. Do not touch the patient. Shock advised."
+    },
+    {
+      "id": 8,
+      "start": "00:02:40",
+      "end": "00:02:55",
+      "speaker": "",
+      "text": "Charging. Stay clear of patient. Deliver shock now. Press the ORM. Shock delivered. Begin CPR."
+    },
+    {
+      "id": 9,
+      "start": "00:03:12",
+      "end": "00:03:13",
+      "speaker": "",
+      "text": "Give two breaths."
+    },
+    {
+      "id": 10,
+      "start": "00:03:34",
+      "end": "00:03:35",
+      "speaker": "",
+      "text": "Give two breaths."
+    },
+    {
+      "id": 11,
+      "start": "00:03:56",
+      "end": "00:04:19",
+      "speaker": "",
+      "text": "Give two breaths"
+    },
+    {
+      "id": 12,
+      "start": "00:04:41",
+      "end": "00:04:52",
+      "speaker": "",
+      "text": "Analyzing heart rhythm. Do not touch the patient."
+    },
+    {
+      "id": 13,
+      "start": "00:04:57",
+      "end": "00:05:10",
+      "speaker": "",
+      "text": "Shock advised. Charging. Stay clear of patient. Deliver shock now."
+    },
+    {
+      "id": 14,
+      "start": "00:05:10",
+      "end": "00:05:16",
+      "speaker": "",
+      "text": "Begin CPR."
+    }
+  ],
+  "overallComments": ""
+}
