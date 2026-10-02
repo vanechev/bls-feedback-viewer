@@ -1,0 +1,335 @@
+{
+  "videos": [
+    {
+      "label": "Session 1",
+      "driveId": "1deU91GbmQwZSt3lM2W-ZwuDNnooQWFDt"
+    },
+    {
+      "label": "Session 2",
+      "driveId": "1ipZmCmT8xgQaTmmPC-Le-KrCL4SdM1Ya"
+    },
+    {
+      "label": "Session 3",
+      "driveId": "1eQf-x2WOoFc0gAEvo9gO5dShuYAfUCEb"
+    },
+    {
+      "label": "Session 4",
+      "driveId": "1YuqaibqeDYXZ3BY2c7WU-mAlNCbeRKf-"
+    }
+  ],
+  "meta": {
+    "videoId": "participant53",
+    "videoFileName": "P-053-s1-full.mp4",
+    "assessor": "",
+    "savedAt": "2026-09-29T00:52:01.853Z"
+  },
+  "logEntries": [
+    {
+      "id": 1,
+      "actionCode": "A2.2",
+      "actionLabel": "Performs a trapezius squeeze by firmly grasping the patient's shoulders",
+      "start": "00:00:09",
+      "end": "00:00:09",
+      "comment": ""
+    },
+    {
+      "id": 2,
+      "actionCode": "A1.2",
+      "actionLabel": "Verbalises potential dangers",
+      "start": "00:00:15",
+      "end": "00:00:15",
+      "comment": ""
+    },
+    {
+      "id": 3,
+      "actionCode": "A3.2",
+      "actionLabel": "Calls out for help",
+      "start": "00:00:28",
+      "end": "00:00:28",
+      "comment": ""
+    },
+    {
+      "id": 4,
+      "actionCode": "A7.1",
+      "actionLabel": "Brings AED to bedside",
+      "start": "00:01:55",
+      "end": "00:01:55",
+      "comment": ""
+    },
+    {
+      "id": 5,
+      "actionCode": "A6.3",
+      "actionLabel": "Performs compressions at depth 5-6cms and rate 100-120bpm",
+      "start": "00:02:02",
+      "end": "00:02:33",
+      "comment": ""
+    },
+    {
+      "id": 6,
+      "actionCode": "A8.1",
+      "actionLabel": "Correctly applies AED pads to bare chest in antero-lateral position",
+      "start": "00:02:16",
+      "end": "00:02:16",
+      "comment": ""
+    },
+    {
+      "id": 7,
+      "actionCode": "A11.1",
+      "actionLabel": "Demonstrates effective teamwork and collaboration",
+      "start": "00:03:00",
+      "end": "00:03:00",
+      "comment": ""
+    },
+    {
+      "id": 8,
+      "actionCode": "A9.5",
+      "actionLabel": "Presses shock button",
+      "start": "00:03:03",
+      "end": "00:03:03",
+      "comment": ""
+    },
+    {
+      "id": 9,
+      "actionCode": "A10.1",
+      "actionLabel": "Continues chest compressions cycle",
+      "start": "00:03:12",
+      "end": "00:04:31",
+      "comment": ""
+    }
+  ],
+  "rubricScores": {
+    "r1": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r2": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r3": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r4-a": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "No patient positioning (bed adjustment or repositioning) was clearly visible before compressions began."
+    },
+    "r4-b": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "No head-tilt\u2013chin-lift or airway-clearing manoeuvre was visible before compressions started."
+    },
+    "r5": {
+      "mark": "0",
+      "markCorrect": "notseen",
+      "comment": "No look-listen-feel assessment for breathing was visible or audible before starting compressions."
+    },
+    "r6": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r7": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r8": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r9": {
+      "mark": "1",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r10": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    },
+    "r11": {
+      "mark": "0.5",
+      "markCorrect": "correct",
+      "comment": ""
+    }
+  },
+  "transcriptSegments": [
+    {
+      "id": 1,
+      "start": "00:00:04",
+      "end": "00:00:14",
+      "speaker": "",
+      "text": "Okay. Hello, man. My name is Sanit. I'm going to be a student nurse for today. Van, do you hear me? Okay, he's not responding, so I'm going to start the doctor's office PD."
+    },
+    {
+      "id": 2,
+      "start": "00:00:14",
+      "end": "00:00:27",
+      "speaker": "",
+      "text": "So, I'm looking for any danger, so I'm going to move this speaker away. Now, for the response, Van, can you squeeze my hands, please? He's not squeezing, and I did a grab squeeze."
+    },
+    {
+      "id": 3,
+      "start": "00:00:28",
+      "end": "00:00:42",
+      "speaker": "",
+      "text": "I did send for help. I already pressed the button. Let me see the button. I'm going to... Okay."
+    },
+    {
+      "id": 4,
+      "start": "00:01:02",
+      "end": "00:01:09",
+      "speaker": "",
+      "text": "Hi, what's going on? I have to sit this down."
+    },
+    {
+      "id": 5,
+      "start": "00:01:30",
+      "end": "00:01:43",
+      "speaker": "",
+      "text": "Maybe we can move ahead. Okay. We can start with those."
+    },
+    {
+      "id": 6,
+      "start": "00:02:04",
+      "end": "00:02:07",
+      "speaker": "",
+      "text": "Let me know when you're done."
+    },
+    {
+      "id": 7,
+      "start": "00:02:08",
+      "end": "00:02:30",
+      "speaker": "",
+      "text": "Call for help."
+    },
+    {
+      "id": 8,
+      "start": "00:02:30",
+      "end": "00:02:45",
+      "speaker": "",
+      "text": "Open pads package and apply pads to patient's spare chest. Analyzing heart rhythm. Do not touch the patient."
+    },
+    {
+      "id": 9,
+      "start": "00:02:45",
+      "end": "00:03:00",
+      "speaker": "",
+      "text": "Do not touch the patient. Do not touch the patient. Shock advised. Stay away, stay clear. Charging. Stay clear of patient."
+    },
+    {
+      "id": 10,
+      "start": "00:03:00",
+      "end": "00:03:10",
+      "speaker": "",
+      "text": "Take care of the patient. Deliver shock now. Press the orange button. Shock delivered. Okay. Please start on questions."
+    },
+    {
+      "id": 11,
+      "start": "00:03:11",
+      "end": "00:03:24",
+      "speaker": "",
+      "text": "Begin CPR."
+    },
+    {
+      "id": 12,
+      "start": "00:04:59",
+      "end": "00:05:10",
+      "speaker": "",
+      "text": "Do not touch the patient. Do not touch the patient."
+    },
+    {
+      "id": 13,
+      "start": "00:05:15",
+      "end": "00:05:29",
+      "speaker": "",
+      "text": "Shock advised. Charging. Stay clear of patient. Stay clear of the patient. Deliver shock now. Deliver shock. Press the orange button."
+    },
+    {
+      "id": 14,
+      "start": "00:05:44",
+      "end": "00:05:44",
+      "speaker": "",
+      "text": "Dr."
+    }
+  ],
+  "overallComments": "",
+  "educator": {
+    "meta": {
+      "videoId": "S028",
+      "assessor": "",
+      "savedAt": "2026-09-22T00:00:00.000Z"
+    },
+    "logEntries": [],
+    "rubricScores": {
+      "r1": {
+        "mark": "1",
+        "markCorrect": "correct",
+        "comment": ""
+      },
+      "r2": {
+        "mark": "1",
+        "markCorrect": "correct",
+        "comment": ""
+      },
+      "r3": {
+        "mark": "1",
+        "markCorrect": "correct",
+        "comment": ""
+      },
+      "r4-a": {
+        "mark": "0.5",
+        "markCorrect": "partial",
+        "comment": "Struggled to get bed flat; brakes left on."
+      },
+      "r4-b": {
+        "mark": "0",
+        "markCorrect": "notseen",
+        "comment": ""
+      },
+      "r5": {
+        "mark": "0",
+        "markCorrect": "notseen",
+        "comment": ""
+      },
+      "r6": {
+        "mark": "0.5",
+        "markCorrect": "partial",
+        "comment": "Delay in starting due to bed issues."
+      },
+      "r7": {
+        "mark": "0.5",
+        "markCorrect": "partial",
+        "comment": ""
+      },
+      "r8": {
+        "mark": "0.5",
+        "markCorrect": "partial",
+        "comment": "R) pad incorrect."
+      },
+      "r9": {
+        "mark": "1",
+        "markCorrect": "correct",
+        "comment": ""
+      },
+      "r10": {
+        "mark": "0.5",
+        "markCorrect": "correct",
+        "comment": ""
+      },
+      "r11": {
+        "mark": "0.25",
+        "markCorrect": "partial",
+        "comment": "Speak up more."
+      }
+    },
+    "transcriptSegments": [],
+    "overallComments": ""
+  }
+}

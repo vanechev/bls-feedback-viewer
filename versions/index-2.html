@@ -1264,15 +1264,6 @@
         );
       }
       loadSessionData(data);
-      pickAiEvalJsonBtn.style.display = 'none';
-
-      // Manifests can optionally embed the educator feedback directly
-      // under an "educator" key, so the whole interview — AI panel,
-      // videos, and Educator panel — auto-loads with zero clicks.
-      if (data.educator) {
-        loadEducatorData(data.educator);
-        pickEducatorEvalJsonBtn.style.display = 'none';
-      }
 
       // This student has a pre-loaded session — hide the manual pickers.
       const setupBar = document.querySelector('.setup-bar');
