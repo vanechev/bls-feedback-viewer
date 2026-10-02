@@ -1264,20 +1264,19 @@
         );
       }
       loadSessionData(data);
+      pickAiEvalJsonBtn.style.display = 'none';
 
       // Manifests can optionally embed the educator feedback directly
       // under an "educator" key, so the whole interview — AI panel,
       // videos, and Educator panel — auto-loads with zero clicks.
       if (data.educator) {
         loadEducatorData(data.educator);
+        pickEducatorEvalJsonBtn.style.display = 'none';
       }
 
-      // Keep the manual pickers (videos, AI json, educator json) visible
-      // and working even after a successful auto-load — Drive-hosted
-      // video playback can be unreliable (large-file interstitials,
-      // quota limits), so the interviewer always has a fallback to load
-      // files locally without reloading the page or losing the rest of
-      // the auto-loaded session.
+      // This student has a pre-loaded session — hide the manual pickers.
+      const setupBar = document.querySelector('.setup-bar');
+      if (setupBar) setupBar.style.display = 'none';
     } catch (err) {
       videoLoadStatus.textContent = `Couldn't auto-load (${err.message}). Use the buttons below to load your files manually.`;
     }
