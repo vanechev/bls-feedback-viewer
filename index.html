@@ -546,6 +546,17 @@
     .thumb-rail { flex-direction: row; width: auto; }
     .thumb-rail .video-cell { flex: 1; }
   }
+  .participant-select {
+    font: inherit; font-size: 13px; padding: 8px 10px; margin-right: 4px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; color: inherit;
+    max-width: 260px;
+  }
+  #dropOverlay {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(79, 70, 229, 0.12); border: 3px dashed var(--accent);
+    color: var(--accent); font-size: 22px; font-weight: 600; z-index: 1000; pointer-events: none;
+  }
+  #dropOverlay.show { display: flex; }
 </style>
 </head>
 <body>
@@ -558,12 +569,16 @@
 </header>
 
 <div class="setup-bar">
-  <button class="file-btn" id="pickVideosBtn"><i class="fa fa-film"></i> Open your 4 videos&hellip;</button>
+  <button class="file-btn" id="pickFolderBtn"><i class="fa fa-folder-open"></i> Open session folder&hellip;</button>
+  <input type="file" id="folderInput" webkitdirectory multiple style="display:none">
+  <select class="participant-select" id="participantSelect" style="display:none" title="Choose participant"></select>
+  <button class="file-btn ghost" id="pickVideosBtn"><i class="fa fa-film"></i> Open 4 videos&hellip;</button>
   <input type="file" id="videosInput" accept="video/*" multiple style="display:none">
-  <button class="file-btn ghost" id="pickJsonBtn"><i class="fa fa-file-text"></i> Open your feedback file (.json)&hellip;</button>
+  <button class="file-btn ghost" id="pickJsonBtn"><i class="fa fa-file-text"></i> Open feedback file (.json)&hellip;</button>
   <input type="file" id="jsonInput" accept=".json" style="display:none">
-  <span class="note">Select all 4 video files at once, and the .json feedback file your assessor/lecturer provided.</span>
+  <span class="note">Easiest: choose the session folder, or drag the folder (or the 4 videos and .json files) anywhere onto this page.</span>
 </div>
+<div id="dropOverlay">Drop your folder or files here</div>
 
 <div class="layout">
 
@@ -1233,55 +1248,351 @@
   }
 
   // ---------------------------------------------------------------
-  // Auto-load from a hosted link: ?student=ID in the page URL.
-  // Fetches data/ID.json (same-origin, e.g. served by GitHub Pages)
-  // which carries both the feedback data and Google Drive file IDs
-  // for the 4 camera angles. Falls back silently to the manual file
-  // pickers above if no ?student= param is present, or if loading
-  // fails for any reason.
+  // Auto-load from a hosted link: ?student=TOKEN in the page URL.
+  // The server maps each random TOKEN to a participant folder, so the
+  // real participant number never appears in the URL:
+  //   m/TOKEN/ai.json        -> data/AI-feedback/P053.json
+  //   m/TOKEN/educator.json  -> data/educator-feedback/P053.json
+  //   m/TOKEN/s1..s4.mp4     -> data/videos/P053/P-053-sN-full.mp4
+  // Each piece is optional; whatever exists is loaded. The manual
+  // file pickers always stay visible as a fallback.
   // ---------------------------------------------------------------
-  function driveDirectUrl(fileId) {
-    // Standard Drive direct-download link. confirm=t skips the
-    // "can't scan this file for viruses" interstitial Drive shows for
-    // larger files; harmless to include on smaller files too.
-    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}&confirm=t`;
+  async function fetchJsonOrNull(url) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (_) { return null; }
+  }
+
+  async function urlExists(url) {
+    try {
+      const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      return res.ok;
+    } catch (_) { return false; }
   }
 
   async function autoLoadFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const studentId = params.get('student');
-    if (!studentId) return;
+    const token = (params.get('student') || '').trim();
+    if (!token) return;
+    if (!/^[A-Za-z0-9_-]+$/.test(token)) {
+      videoLoadStatus.textContent = "Couldn't auto-load (invalid link). Use the buttons below to load your files manually.";
+      return;
+    }
 
     videoLoadStatus.textContent = 'Loading your session…';
+    const base = `m/${encodeURIComponent(token)}/`;
     try {
-      const res = await fetch(`data/${encodeURIComponent(studentId)}.json`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`no session found for "${studentId}" (HTTP ${res.status})`);
-      const data = await res.json();
+      const [ai, edu, ...videoOk] = await Promise.all([
+        fetchJsonOrNull(base + 'ai.json'),
+        fetchJsonOrNull(base + 'educator.json'),
+        ...[1, 2, 3, 4].map(n => urlExists(`${base}s${n}.mp4`)),
+      ]);
 
-      if (Array.isArray(data.videos) && data.videos.length) {
-        loadVideosFromSources(
-          data.videos.slice(0, 4).map(v => ({ url: driveDirectUrl(v.driveId), label: v.label || '' }))
-        );
-      }
-      loadSessionData(data);
+      const videos = [1, 2, 3, 4]
+        .filter((n, i) => videoOk[i])
+        .map(n => ({ url: `${base}s${n}.mp4`, label: `Session ${n}` }));
 
-      // Manifests can optionally embed the educator feedback directly
-      // under an "educator" key, so the whole interview — AI panel,
-      // videos, and Educator panel — auto-loads with zero clicks.
-      if (data.educator) {
-        loadEducatorData(data.educator);
+      if (!ai && !edu && !videos.length) {
+        throw new Error('no session found for this link');
       }
 
-      // Keep the manual pickers (videos, AI json, educator json) visible
-      // and working even after a successful auto-load — Drive-hosted
-      // video playback can be unreliable (large-file interstitials,
-      // quota limits), so the interviewer always has a fallback to load
-      // files locally without reloading the page or losing the rest of
-      // the auto-loaded session.
+      if (videos.length) loadVideosFromSources(videos);
+      if (ai) loadSessionData(ai);
+      if (edu) loadEducatorData(edu);
+
+      if (!videos.length) {
+        videoLoadStatus.textContent = 'Feedback loaded, but no videos were found for this link. Use the buttons below to load them manually.';
+      }
     } catch (err) {
       videoLoadStatus.textContent = `Couldn't auto-load (${err.message}). Use the buttons below to load your files manually.`;
     }
   }
+
+  // ---------------------------------------------------------------
+  // One-step loading: choose a folder, or drag a folder / files onto the
+  // page. Videos are matched to angles by the "-s1 ... -s4" part of their
+  // name; the feedback .json files are told apart by folder/file name
+  // (AI vs educator) or, failing that, by their content. If a folder holds
+  // several participants (e.g. the whole data folder) a dropdown appears
+  // to switch between them. Everything stays on this computer.
+  // ---------------------------------------------------------------
+  const folderInput = document.getElementById('folderInput');
+  const pickFolderBtn = document.getElementById('pickFolderBtn');
+  const participantSelect = document.getElementById('participantSelect');
+  const dropOverlay = document.getElementById('dropOverlay');
+
+  // What the panels look like before anything is loaded (used by reset).
+  const INITIAL_HTML = {
+    timelineList: timelineList.innerHTML,
+    transcriptList: transcriptList.innerHTML,
+    summaryBreakdownList: summaryBreakdownList.innerHTML,
+    feedbackList: feedbackList.innerHTML,
+    feedbackListEdu: feedbackListEdu.innerHTML,
+  };
+  let objectUrls = [];
+  let folderGroups = new Map();
+  // Opening a session folder (or dropping files) loads the videos and the
+  // AI feedback only. The educator feedback is NOT loaded automatically;
+  // use the "Open the educator feedback.json" button to add it by hand.
+  // Set this to true to load educator feedback together with the folder.
+  const AUTO_LOAD_EDUCATOR = false;
+
+  // Clear the previous participant completely so nothing stale (e.g. the
+  // last student's AI feedback) is left behind when switching.
+  function resetSession() {
+    players.forEach(p => {
+      try { p.el.pause(); } catch (_) {}
+      p.el.removeAttribute('src');
+      try { p.el.load(); } catch (_) {}
+      p.el.style.display = 'none';
+      p.loaded = false;
+    });
+    objectUrls.forEach(u => URL.revokeObjectURL(u));
+    objectUrls = [];
+    mainIndex = 0;
+    sessionData = null;
+    educatorSessionData = null;
+    sessionNameLabel.textContent = 'No session loaded';
+    videoLoadStatus.textContent = 'No videos loaded';
+    seekbar.value = 0;
+    seekbarMarkers.innerHTML = '';
+    timecode.textContent = '00:00:00 / 00:00:00';
+    captionOverlay.innerHTML = '';
+    timelineList.innerHTML = INITIAL_HTML.timelineList;
+    transcriptList.innerHTML = INITIAL_HTML.transcriptList;
+    summaryBreakdownList.innerHTML = INITIAL_HTML.summaryBreakdownList;
+    statDuration.textContent = '—';
+    statActions.textContent = '—';
+    feedbackList.innerHTML = INITIAL_HTML.feedbackList;
+    feedbackListEdu.innerHTML = INITIAL_HTML.feedbackListEdu;
+    overallCommentWrap.innerHTML = '';
+    overallCommentWrapEdu.innerHTML = '';
+    [
+      [videoIdLabel, scoreValue, scoreOf, scoreDonutFill],
+      [videoIdLabelEdu, scoreValueEdu, scoreOfEdu, scoreDonutFillEdu],
+    ].forEach(([idEl, valEl, totEl, fillEl]) => {
+      idEl.textContent = '—';
+      valEl.textContent = '—';
+      totEl.textContent = '— / 0';
+      fillEl.setAttribute('stroke-dasharray', '0 251.2');
+    });
+    clearSplitRowAlignment();
+    playPauseBtn.innerHTML = '&#9654; Play';
+    renderVideoPanel();
+    updateStatus();
+  }
+
+  const VIDEO_RE = /\.(mp4|m4v|mov|webm)$/i;
+  const filePath = (f) => f._path || f.webkitRelativePath || f.name;
+
+  // "P-007-s2-full.mp4", "P007.json", or a parent folder named "P007" -> "007"
+  function detectParticipant(f) {
+    const re = /(?:^|[^a-z0-9])p[-_ ]?(\d{2,3})(?=$|[^0-9])/i;
+    let m = re.exec(f.name);
+    if (!m) {
+      const parts = filePath(f).split('/');
+      if (parts.length > 1) m = re.exec(parts[parts.length - 2]);
+    }
+    return m ? m[1].padStart(3, '0') : null;
+  }
+  // "-s1" ... "-s4" in a video file name -> 1..4
+  function detectSession(name) {
+    const m = /(?:^|[-_ .])s([1-4])(?=$|[-_ .])/i.exec(name);
+    return m ? parseInt(m[1], 10) : null;
+  }
+  // Decide AI vs educator from the file name / immediate parent folder.
+  function jsonRole(f) {
+    const parts = filePath(f).toLowerCase().split('/');
+    const hint = parts.slice(-2).join('/');
+    if (/educator/.test(hint)) return 'educator';
+    if (/(?:^|[^a-z])ai(?:[^a-z]|$)/.test(hint)) return 'ai';
+    return null; // decided from the file's content later
+  }
+
+  function buildGroups(files) {
+    const groups = new Map();
+    const get = (id) => {
+      if (!groups.has(id)) groups.set(id, { id, videos: [], ai: null, educator: null, unknownJson: [] });
+      return groups.get(id);
+    };
+    files.forEach(f => {
+      if (f.name.startsWith('.')) return; // .DS_Store and similar
+      const isVideo = VIDEO_RE.test(f.name) || (f.type || '').startsWith('video/');
+      const isJson = /\.json$/i.test(f.name);
+      if (!isVideo && !isJson) return;
+      const g = get(detectParticipant(f) || '_');
+      if (isVideo) {
+        g.videos.push(f);
+      } else {
+        const role = jsonRole(f);
+        if (role === 'ai' && !g.ai) g.ai = f;
+        else if (role === 'educator' && !g.educator) g.educator = f;
+        else if (!role) g.unknownJson.push(f);
+      }
+    });
+    return groups;
+  }
+
+  // Up to 4 videos in session order (s1, s2, s3, s4); if a session has
+  // several files, prefer the one with "full" in its name. Files with no
+  // -sN part follow in name order.
+  function orderedVideos(videos) {
+    const bySession = new Map();
+    const rest = [];
+    videos.forEach(f => {
+      const s = detectSession(f.name);
+      if (s === null) { rest.push(f); return; }
+      const prev = bySession.get(s);
+      if (!prev || (/full/i.test(f.name) && !/full/i.test(prev.name))) bySession.set(s, f);
+    });
+    const withSession = [...bySession.keys()].sort((a, b) => a - b).map(s => bySession.get(s));
+    rest.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    return withSession.concat(rest).slice(0, 4);
+  }
+
+  function groupLabel(g) {
+    const name = g.id === '_' ? 'Selected files' : 'P' + g.id;
+    const hasAi = !!g.ai || g.unknownJson.length > 0;
+    const parts = [`${Math.min(g.videos.length, 4)} videos`];
+    if (g.ai) parts.push('AI');
+    if (g.educator && AUTO_LOAD_EDUCATOR) parts.push('Educator');
+    if (!g.ai && hasAi) parts.push('feedback file');
+    return `${name} · ${parts.join(' · ')}`;
+  }
+
+  async function loadGroup(g) {
+    resetSession();
+    const vids = orderedVideos(g.videos);
+    if (vids.length) {
+      loadVideosFromSources(vids.map(f => {
+        const url = URL.createObjectURL(f);
+        objectUrls.push(url);
+        return { url, label: f.name };
+      }));
+    }
+
+    const parsed = {};
+    const problems = [];
+    const known = [['ai', g.ai]];
+    if (AUTO_LOAD_EDUCATOR) known.push(['educator', g.educator]);
+    for (const [role, f] of known) {
+      if (!f) continue;
+      try { parsed[role] = JSON.parse(await f.text()); } catch (_) { problems.push(f.name); }
+    }
+    for (const f of g.unknownJson) {
+      try {
+        const data = JSON.parse(await f.text());
+        const isSession = Array.isArray(data.logEntries) || Array.isArray(data.transcriptSegments);
+        const role = isSession ? 'ai' : 'educator';
+        if (!parsed[role]) parsed[role] = data;
+      } catch (_) { problems.push(f.name); }
+    }
+    if (parsed.ai) loadSessionData(parsed.ai);
+    if (AUTO_LOAD_EDUCATOR && parsed.educator) loadEducatorData(parsed.educator);
+
+    if (!sessionData) sessionNameLabel.textContent = g.id === '_' ? 'Session' : 'Participant P' + g.id;
+    if (!vids.length) videoLoadStatus.textContent = 'No videos found in this selection';
+    if (problems.length) videoLoadStatus.textContent += ` · could not read: ${problems.join(', ')}`;
+    updateStatus();
+  }
+
+  function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    folderGroups = buildGroups(files);
+    if (!folderGroups.size) {
+      participantSelect.style.display = 'none';
+      videoLoadStatus.textContent = 'No videos or .json files found in that selection';
+      return;
+    }
+    const ids = [...folderGroups.keys()].sort((a, b) => ((a === '_') - (b === '_')) || a.localeCompare(b));
+    if (ids.length === 1) {
+      participantSelect.style.display = 'none';
+      loadGroup(folderGroups.get(ids[0]));
+      return;
+    }
+    // Several participants in one selection: let the user choose.
+    participantSelect.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = 'Choose participant…'; ph.disabled = true; ph.selected = true;
+    participantSelect.appendChild(ph);
+    ids.forEach(id => {
+      const o = document.createElement('option');
+      o.value = id; o.textContent = groupLabel(folderGroups.get(id));
+      participantSelect.appendChild(o);
+    });
+    participantSelect.style.display = '';
+    resetSession();
+    videoLoadStatus.textContent = `${ids.length} participants found — choose one`;
+  }
+
+  pickFolderBtn.addEventListener('click', () => folderInput.click());
+  folderInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+    e.target.value = ''; // allow choosing the same folder again
+  });
+  participantSelect.addEventListener('change', () => {
+    const g = folderGroups.get(participantSelect.value);
+    if (g) loadGroup(g);
+  });
+
+  // Drag and drop (folders and/or files) anywhere on the page.
+  async function collectFromEntry(entry, prefix, out) {
+    if (entry.isFile) {
+      const file = await new Promise((res, rej) => entry.file(res, rej));
+      try { file._path = prefix + file.name; } catch (_) {}
+      out.push(file);
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      let batch;
+      do {
+        batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+        for (const child of batch) await collectFromEntry(child, prefix + entry.name + '/', out);
+      } while (batch.length);
+    }
+  }
+  let dragDepth = 0;
+  const hasFiles = (e) => !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
+  window.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    dropOverlay.classList.add('show');
+  });
+  window.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) dropOverlay.classList.remove('show');
+  });
+  window.addEventListener('drop', async (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    dropOverlay.classList.remove('show');
+    // webkitGetAsEntry must be called synchronously, before any await.
+    const entries = Array.from(e.dataTransfer.items || [])
+      .map(it => (it.webkitGetAsEntry ? it.webkitGetAsEntry() : null))
+      .filter(Boolean);
+    let files = [];
+    if (entries.length) {
+      videoLoadStatus.textContent = 'Reading dropped files…';
+      try {
+        for (const en of entries) await collectFromEntry(en, '', files);
+      } catch (_) {
+        files = Array.from(e.dataTransfer.files || []);
+      }
+    } else {
+      files = Array.from(e.dataTransfer.files || []);
+    }
+    handleFiles(files);
+  });
 
   autoLoadFromUrl();
 
