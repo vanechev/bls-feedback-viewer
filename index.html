@@ -632,6 +632,14 @@
           <option value="2">2&times;</option>
         </select>
         <button id="ccToggleBtn" class="cc-btn" title="Toggle captions">CC</button>
+        <select class="rate-select" id="audioSelect" title="Which angle's sound you hear (only one plays, so the four audio tracks do not echo)">
+          <option value="main" selected>Sound: main view</option>
+          <option value="0">Sound: Angle 1</option>
+          <option value="1">Sound: Angle 2</option>
+          <option value="2">Sound: Angle 3</option>
+          <option value="3">Sound: Angle 4</option>
+          <option value="off">Sound: off</option>
+        </select>
         <div class="spacer"></div>
         <span class="kbd-hint"><kbd>Space</kbd> play/pause &nbsp; <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> &plusmn;1s</span>
       </div>
@@ -641,7 +649,7 @@
           <div class="seekbar-markers" id="seekbarMarkers"></div>
         </div>
       </div>
-      <div class="ai-scored-note" style="padding-bottom:14px">Click a thumbnail to swap it into the main view. Dots mark single actions, bars mark actions with duration &mdash; click either to jump.</div>
+      <div class="ai-scored-note" style="padding-bottom:14px">Click a thumbnail to swap it into the main view (the sound follows the main view; change it with the Sound menu). Dots mark single actions, bars mark actions with duration &mdash; click either to jump.</div>
     </div>
 
     <div class="card">
@@ -705,7 +713,7 @@
       <div class="fb-note" id="aiFbNote"></div>
       <div class="score-banner">
         <div class="score-meta">
-          <div class="video-id">Session <strong id="videoIdLabel">&mdash;</strong></div>
+          <div class="video-id"><span class="id-word">Session</span> <strong id="videoIdLabel">&mdash;</strong></div>
         </div>
         <div class="score-donut-wrap">
           <div class="score-donut-label">
@@ -738,7 +746,7 @@
       <div class="fb-note" id="eduFbNote"></div>
       <div class="score-banner">
         <div class="score-meta">
-          <div class="video-id">Session <strong id="videoIdLabelEdu">&mdash;</strong></div>
+          <div class="video-id"><span class="id-word">Session</span> <strong id="videoIdLabelEdu">&mdash;</strong></div>
         </div>
         <div class="score-donut-wrap">
           <div class="score-donut-label">
@@ -862,6 +870,7 @@
   const evalPanelsWrap = document.getElementById('evalPanelsWrap');
   const evalTabBar = document.getElementById('evalTabBar');
   let educatorSessionData = null;
+  let participantLabel = ''; // e.g. "P053"; shown instead of the session ID when known
 
   // ---------------------------------------------------------------
   // Show / Hide for the AI and educator feedback panels. Everything is
@@ -1074,6 +1083,11 @@
   let syncing = false; // guard against feedback loops while syncing
   let sessionData = null;
   let mainIndex = 0; // which player index is currently shown in the main view
+  let audioMode = 'main'; // 'main' | '0'..'3' | 'off' — only ONE angle is ever audible
+  let userPlaying = false; // what the person asked for (play/pause), independent of buffering holds
+  let bufferHold = false;  // true while all angles are paused waiting for a slow one
+  let holdSince = 0;
+  let rendering = false;   // moving <video> elements in the DOM fires pause events; ignore them
 
   // ---------------------------------------------------------------
   // Build 4 <video> elements up front (empty placeholders), one
@@ -1085,6 +1099,8 @@
       const video = document.createElement('video');
       video.id = `player${i}`;
       video.playsInline = true;
+      video.preload = 'auto';
+      video.muted = true;
       video.style.display = 'none';
       players.push({ el: video, index: i, loaded: false });
     }
@@ -1093,6 +1109,17 @@
   buildEmptyGrid();
 
   function renderVideoPanel() {
+    const wasPlaying = userPlaying;
+    rendering = true;
+    renderVideoPanelInner();
+    rendering = false;
+    applyAudio();
+    if (wasPlaying && !bufferHold) {
+      players.forEach(p => { if (p.loaded && p.el.paused) p.el.play().catch(()=>{}); });
+    }
+  }
+
+  function renderVideoPanelInner() {
     // Main view. The caption overlay is a permanent child of #mainVideo
     // (defined in the static HTML) — detach it first, rebuild the video
     // wrap, then re-append it on top so it survives every re-render.
@@ -1155,6 +1182,7 @@
     // Sort by filename for a stable, predictable angle order
     files.sort((a,b) => a.name.localeCompare(b.name));
     loadVideosFromSources(files.map(f => ({ url: URL.createObjectURL(f), label: f.name })));
+    adoptParticipant(files);
   });
 
   // Loads up to 4 video sources into the player grid. `sources` is an
@@ -1200,14 +1228,107 @@
         updateCaptionOverlay(p.el.currentTime);
         updateActiveHighlights(p.el.currentTime);
       });
-      p.el.addEventListener('play', () => { playPauseBtn.innerHTML = '&#10074;&#10074; Pause'; syncAll('play'); });
-      p.el.addEventListener('pause', () => { playPauseBtn.innerHTML = '&#9654; Play'; syncAll('pause'); });
+      p.el.addEventListener('play', () => {
+        if (!bufferHold) userPlaying = true;
+        playPauseBtn.innerHTML = '&#10074;&#10074; Pause'; syncAll('play');
+      });
+      p.el.addEventListener('pause', () => {
+        if (bufferHold || rendering) return;   // our own hold / DOM move, not the person pausing
+        if (p.el.ended) return;
+        userPlaying = false;
+        playPauseBtn.innerHTML = '&#9654; Play'; syncAll('pause');
+      });
       p.el.addEventListener('loadedmetadata', () => {
         renderSeekbarMarkers();
         if (sessionData) renderSession(sessionData);
       });
     }
   }
+
+  // ---------------------------------------------------------------
+  // Audio: exactly one angle is audible (the four tracks record the
+  // same room, so playing them together sounds like a bad echo).
+  // ---------------------------------------------------------------
+  function audibleIndex() {
+    if (audioMode === 'off') return -1;
+    if (audioMode === 'main') return mainIndex;
+    const n = parseInt(audioMode, 10);
+    return isNaN(n) ? mainIndex : n;
+  }
+  function applyAudio() {
+    const a = audibleIndex();
+    players.forEach(p => { p.el.muted = (p.index !== a); if (p.index === a) p.el.volume = 1; });
+  }
+  const audioSelect = document.getElementById('audioSelect');
+  audioSelect.addEventListener('change', () => { audioMode = audioSelect.value; applyAudio(); });
+
+  // ---------------------------------------------------------------
+  // Continuous sync. The browser plays each file on its own clock, so
+  // left alone the angles drift apart (and a slow one stalls alone).
+  // Every 200 ms: pause everything while any angle is still buffering,
+  // otherwise pull all angles to the audible one (the clock you hear).
+  // ---------------------------------------------------------------
+  function activePlayers() {
+    return players.filter(p => p.loaded && p.el.getAttribute('src') && !p.el.error);
+  }
+  function clockEl() {
+    const a = audibleIndex();
+    const ap = players[a];
+    if (ap && ap.loaded && !ap.el.error) return ap.el;
+    return masterPlayer || (activePlayers()[0] || {}).el || null;
+  }
+  function baseRate() { return parseFloat(rateSelect.value) || 1; }
+  function waiting(p) {
+    const v = p.el;
+    if (v.ended || v.seeking && v.readyState < 2) return true;
+    if (v.ended) return false;
+    return v.readyState < 3 && !(isFinite(v.duration) && v.currentTime >= v.duration - 0.2);
+  }
+  function holdAll() {
+    bufferHold = true; holdSince = performance.now();
+    players.forEach(p => { if (p.loaded && !p.el.paused) p.el.pause(); });
+  }
+  function releaseHold() {
+    bufferHold = false;
+    const c = clockEl();
+    const t = c ? c.currentTime : 0;
+    activePlayers().forEach(p => {
+      if (isFinite(p.el.duration) && t > p.el.duration) return;
+      if (Math.abs(p.el.currentTime - t) > 0.05) p.el.currentTime = t;
+    });
+    activePlayers().forEach(p => p.el.play().catch(()=>{}));
+  }
+  function syncTick() {
+    if (!userPlaying) return;
+    const act = activePlayers();
+    if (act.length < 2) return;
+    const stuck = act.filter(waiting);
+    if (bufferHold) {
+      // wait for everyone, but never freeze for more than 8 s
+      if (!stuck.length || performance.now() - holdSince > 8000) releaseHold();
+      return;
+    }
+    if (stuck.length && !stuck.every(p => p.el.ended)) { holdAll(); return; }
+    const clock = clockEl();
+    if (!clock || clock.paused) return;
+    const base = baseRate();
+    act.forEach(p => {
+      if (p.el === clock) { if (p.el.playbackRate !== base) p.el.playbackRate = base; return; }
+      if (p.el.paused || p.el.seeking) return;
+      if (isFinite(p.el.duration) && clock.currentTime > p.el.duration) return; // shorter clip already finished
+      const drift = p.el.currentTime - clock.currentTime;
+      const ad = Math.abs(drift);
+      if (ad > 0.3) {
+        p.el.currentTime = clock.currentTime + 0.05; p.el.playbackRate = base;
+      } else if (ad > 0.04) {
+        const adj = Math.max(-0.1, Math.min(0.1, drift * 0.5));
+        p.el.playbackRate = base * (1 - adj);
+      } else if (p.el.playbackRate !== base) {
+        p.el.playbackRate = base;
+      }
+    });
+  }
+  setInterval(syncTick, 200);
 
   function syncAll(action, time) {
     syncing = true;
@@ -1217,6 +1338,7 @@
       if (action === 'pause' && !p.el.paused) p.el.pause();
       if (action === 'seek' && time !== undefined) {
         if (Math.abs(p.el.currentTime - time) > 0.15) p.el.currentTime = time;
+        if (bufferHold) holdSince = performance.now();
       }
     });
     syncing = false;
@@ -1387,11 +1509,30 @@
   let objectUrls = [];
   let folderGroups = new Map();
 
+  // Re-apply the participant number to every place that shows an ID.
+  function refreshIdLabels() {
+    document.querySelectorAll('.id-word').forEach(el => { el.textContent = participantLabel ? 'Participant' : 'Session'; });
+    if (participantLabel) {
+      if (sessionData || educatorSessionData || players.some(p => p.loaded)) sessionNameLabel.textContent = participantLabel;
+      if (aiAvailable) videoIdLabel.textContent = participantLabel;
+      if (eduAvailable) videoIdLabelEdu.textContent = participantLabel;
+    }
+    updateStatus();
+  }
+  // For the manual pickers: take the participant number from the chosen file names.
+  function adoptParticipant(files) {
+    for (const f of files) {
+      const id = detectParticipant(f);
+      if (id) { participantLabel = 'P' + id; refreshIdLabels(); return; }
+    }
+  }
+
   // The AI feedback session file carries the detected events / transcript.
   const looksLikeSession = (d) => !!d && (Array.isArray(d.logEntries) || Array.isArray(d.transcriptSegments));
 
   // Load one or more feedback .json files (AI vs educator: by name, then content).
   async function loadJsonFiles(files) {
+    adoptParticipant(files);
     for (const f of files) {
       try {
         const data = JSON.parse(await f.text());
@@ -1442,6 +1583,8 @@
       totEl.textContent = '— / 0';
       fillEl.setAttribute('stroke-dasharray', '0 251.2');
     });
+    participantLabel = '';
+    document.querySelectorAll('.id-word').forEach(el => { el.textContent = 'Session'; });
     aiAvailable = false; eduAvailable = false;
     aiVisible = FEEDBACK_SHOWN_BY_DEFAULT.ai; eduVisible = FEEDBACK_SHOWN_BY_DEFAULT.educator;
     clearSplitRowAlignment();
@@ -1462,6 +1605,7 @@
       const parts = filePath(f).split('/');
       if (parts.length > 1) m = re.exec(parts[parts.length - 2]);
     }
+    if (!m && f._zipName) m = re.exec(f._zipName);
     return m ? m[1].padStart(3, '0') : null;
   }
   // "-s1" ... "-s4" in a video file name -> 1..4
@@ -1543,6 +1687,7 @@
 
   async function loadGroup(g) {
     resetSession();
+    participantLabel = g.id === '_' ? '' : 'P' + g.id;
     const vids = orderedVideos(g.videos);
     if (vids.length) {
       loadVideosFromSources(vids.map(f => {
@@ -1572,11 +1717,11 @@
       summaryBreakdownList.innerHTML = '<div class="empty-note">No AI feedback is available for this session.</div>';
     }
 
-    if (!sessionData) sessionNameLabel.textContent = g.id === '_' ? 'Session' : 'Participant P' + g.id;
+    if (!sessionData) sessionNameLabel.textContent = participantLabel || 'Session';
     if (!vids.length) videoLoadStatus.textContent = 'No videos found in this selection';
     if (problems.length) videoLoadStatus.textContent += ` · could not read: ${problems.join(', ')}`;
     applyFeedbackVisibility();
-    updateStatus();
+    refreshIdLabels();
   }
 
   // ---- .zip support: students can drop the zip they downloaded, no unzipping ----
@@ -1626,6 +1771,7 @@
           done += e.uncompressedSize || 0;
           const f = new File([blob], base, { type: mime });
           f._path = e.filename;
+          f._zipName = z.name;
           out.push(f);
         }
       } catch (err) {
@@ -1786,8 +1932,10 @@
   // resolve each criterion's "Related events" tags, since detected
   // actions belong to the video, not to whichever json is scoring it.
   function renderEvaluation(data, els, linkEntries, labelOverride) {
-    const videoId = labelOverride || data.meta?.videoId || 'Unknown session';
+    const videoId = participantLabel || labelOverride || data.meta?.videoId || 'Unknown session';
     els.videoIdLabel.textContent = videoId;
+    const idWord = els.videoIdLabel.previousElementSibling;
+    if (idWord) idWord.textContent = participantLabel ? 'Participant' : 'Session';
 
     let total = 0;
     const scores = data.rubricScores || {};
@@ -1886,7 +2034,7 @@
 
 
   function renderSession(data) {
-    const videoId = data.meta?.videoId || 'Unknown session';
+    const videoId = participantLabel || data.meta?.videoId || 'Unknown session';
     sessionNameLabel.textContent = videoId;
     updateStatus();
 
@@ -1993,7 +2141,7 @@
   }
 
   function updateStatus() {
-    const vid = sessionData?.meta?.videoId;
+    const vid = participantLabel || sessionData?.meta?.videoId;
     const loadedCount = players.filter(p => p.loaded).length;
     if (vid && loadedCount) {
       statusLine.textContent = `${vid} · ${loadedCount}/4 angles loaded`;
