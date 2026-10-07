@@ -1352,6 +1352,9 @@
     return [h,m,s].map(v => String(v).padStart(2,'0')).join(':');
   }
   function parseTime(str) {
+    if (typeof str === 'number') return str;
+    if (typeof str !== 'string') return null;
+    if (/^\s*\d+(\.\d+)?\s*$/.test(str)) return parseFloat(str);
     const parts = str.split(':').map(Number);
     if (parts.some(isNaN)) return null;
     let sec = 0;
@@ -1413,7 +1416,54 @@
     await loadJsonFiles(files);
   });
 
+  // Transcripts arrive in several shapes. Normalise them all to
+  // [{id,start:"HH:MM:SS",end:"HH:MM:SS",speaker,text}]:
+  //  - start/end given as seconds (numbers or "5.09")
+  //  - one long text with inline "[5.09] words [9.48] words" markers
+  //  - a plain `transcript` string (same inline markers)
+  function secToClock(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    return [Math.floor(sec/3600), Math.floor(sec%3600/60), sec%60].map(v => String(v).padStart(2,'0')).join(':');
+  }
+  function toClock(v) {
+    if (typeof v === 'number') return secToClock(v);
+    if (typeof v === 'string' && /^\s*\d+(\.\d+)?\s*$/.test(v)) return secToClock(parseFloat(v));
+    return v;
+  }
+  function splitInlineMarkers(text, fallbackStart, fallbackEnd, speaker) {
+    const re = /\[(\d+(?:\.\d+)?)\]\s*/g;
+    const marks = []; let m;
+    while ((m = re.exec(text)) !== null) marks.push({ t: parseFloat(m[1]), idx: m.index, after: re.lastIndex });
+    if (marks.length < 1) return null;
+    const out = [];
+    marks.forEach((mk, i) => {
+      const next = marks[i+1];
+      const body = text.slice(mk.after, next ? next.idx : text.length).trim();
+      if (!body) return;
+      out.push({ speaker, text: body, _s: mk.t, _e: next ? next.t : null });
+    });
+    out.forEach((o, i) => { if (o._e === null) o._e = (i === out.length-1 ? (fallbackEnd !== undefined ? fallbackEnd : o._s + 4) : out[i+1]._s); });
+    return out.map(o => ({ speaker: o.speaker, text: o.text, start: secToClock(o._s), end: secToClock(Math.max(o._e, o._s + 1)) }));
+  }
+  function normalizeTranscript(data) {
+    if (!data || typeof data !== 'object') return data;
+    let segs = Array.isArray(data.transcriptSegments) ? data.transcriptSegments : [];
+    if (!segs.length && typeof data.transcript === 'string') segs = [{ text: data.transcript }];
+    const out = [];
+    segs.forEach(seg => {
+      if (typeof seg === 'string') seg = { text: seg };
+      const text = String(seg.text || '');
+      const split = /\[\d+(?:\.\d+)?\]/.test(text) ? splitInlineMarkers(text, undefined, undefined, seg.speaker) : null;
+      if (split) { out.push(...split); return; }
+      out.push(Object.assign({}, seg, { start: toClock(seg.start), end: toClock(seg.end) }));
+    });
+    out.forEach((o, i) => { if (o.id === undefined || o.id === null) o.id = `seg-${i}`; });
+    if (out.length) data.transcriptSegments = out;
+    return data;
+  }
+
   function loadSessionData(data) {
+    normalizeTranscript(data);
     sessionData = data;
     aiAvailable = true;
     renderSession(sessionData);
